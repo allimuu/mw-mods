@@ -1,19 +1,8 @@
 -- The default configuration values.
-local defaultConfig = {}
+local common = require('More Interesting Combat.common')
+local multistrike
+local critical
 
--- Load our config file, and fill in default values for missing elements.
-local config = mwse.loadConfig("More Interesting Combat")
-if (config == nil) then
-	config = defaultConfig
-else
-	for k, v in pairs(defaultConfig) do
-		if (config[k] == nil) then
-			config[k] = v
-		end
-	end
-end
-
-local multistrike = require("More Interesting Combat.multistrike")
 local player
 local multistrikeCounters
 
@@ -22,7 +11,6 @@ local function onLoaded(e)
 	player = tes3.getPlayerRef()
 	multistrikeCounters = {}
 end
-event.register("loaded", onLoaded)
 
 local function onCombatEnd(e)
     if (e.actor.reference == player) then
@@ -30,8 +18,6 @@ local function onCombatEnd(e)
         multistrikeCounters = {}
     end
 end
-event.register("combatStopped", onCombatEnd)
-
 
 local function onAttack(e)
 	--
@@ -63,8 +49,16 @@ local function onAttack(e)
                 -- long blade
                 multistrikeCounters = multistrike.checkCounters(source.id, multistrikeCounters)
                 if multistrikeCounters[source.id] == 3 then
-                    multistrike.perform(source, action.physicalDamage, target)
+                    local damageDone
+                    damageDone = multistrike.perform(source, action.physicalDamage, target)
                     multistrikeCounters[source.id] = 0
+                    if common.config.showMessages then
+                        local msgString = "Multistrike!"
+                        if common.config.showDamageNumbers then
+                            msgString = msgString .. " Extra damage: " .. math.round(damageDone, 2)
+                        end
+                        tes3.messageBox({ message = msgString })
+                    end
                 end
             elseif weapon.object.type > -1 then
                 -- short blade
@@ -75,4 +69,21 @@ local function onAttack(e)
     end
 end
 
-event.register("attack", onAttack)
+local function initialized(e)
+	if tes3.isModActive("More Interesting Combat.esp") then
+        common.loadConfig()
+
+        -- load modules
+        multistrike = require("More Interesting Combat.multistrike")
+        critical = require("More Interesting Combat.critical")
+
+		-- register events
+        event.register("loaded", onLoaded)
+        event.register("combatStopped", onCombatEnd)
+        event.register("attack", onAttack)
+
+		mwse.log("[More Interesting Combat] Initialized version v%d", common.config.version)
+		mwse.log(json.encode(common.config, {indent=true}))
+	end
+end
+event.register("initialized", initialized)
