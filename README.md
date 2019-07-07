@@ -1,1 +1,1 @@
-# mwse-mods
+# My Morrowind mods
