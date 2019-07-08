@@ -2,11 +2,11 @@ this = {
 	config = {},
 }
 local defaultConfig = {
-    version = 1,
     showMessages = true,
     showDamageNumbers = true,
     multistrikeStrikesNeeded = 3,
     multistrikeBonuseDamageMultiplier = 2,
+    criticalStrikeMultiplier = 0.5,
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,

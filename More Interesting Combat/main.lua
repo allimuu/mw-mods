@@ -1,21 +1,39 @@
--- The default configuration values.
+--
+local version = 1.0
+
+-- modules
 local common = require('More Interesting Combat.common')
 local multistrike
 local critical
 
+-- counters and refs
 local player
 local multistrikeCounters
+local bleedStacks
 
--- Load player and init multistrike counters
+-- Load player and init counters/stacks
 local function onLoaded(e)
 	player = tes3.getPlayerRef()
-	multistrikeCounters = {}
+    multistrikeCounters = {}
+    bleedStacks = {}
 end
 
 local function onCombatEnd(e)
     if (e.actor.reference == player) then
         -- reset multistrike counters
         multistrikeCounters = {}
+        -- reset bleed stacks
+        bleedStacks = {}
+    end
+end
+
+local function damageMessage(damageType, damageDone)
+    if common.config.showMessages then
+        local msgString = damageType
+        if common.config.showDamageNumbers then
+            msgString = msgString .. " Extra damage: " .. math.round(damageDone, 2)
+        end
+        tes3.messageBox({ message = msgString })
     end
 end
 
@@ -52,16 +70,17 @@ local function onAttack(e)
                     local damageDone
                     damageDone = multistrike.perform(source, action.physicalDamage, target)
                     multistrikeCounters[source.id] = 0
-                    if common.config.showMessages then
-                        local msgString = "Multistrike!"
-                        if common.config.showDamageNumbers then
-                            msgString = msgString .. " Extra damage: " .. math.round(damageDone, 2)
-                        end
-                        tes3.messageBox({ message = msgString })
+                    if source == player then
+                        damageMessage("Multistrike!", damageDone)
                     end
                 end
             elseif weapon.object.type > -1 then
                 -- short blade
+                local damageDone
+                damageDone = critical.perform(source, action.physicalDamage, target)
+                if (damageDone ~= nil and source == player) then
+                    damageMessage("Critical strike!", damageDone)
+                end
             end
         end
 
@@ -82,8 +101,8 @@ local function initialized(e)
         event.register("combatStopped", onCombatEnd)
         event.register("attack", onAttack)
 
-		mwse.log("[More Interesting Combat] Initialized version v%d", common.config.version)
-		mwse.log(json.encode(common.config, {indent=true}))
+		mwse.log("[More Interesting Combat] Initialized version v%d", version)
+        mwse.log(json.encode(common.config, {indent=true}))
 	end
 end
 event.register("initialized", initialized)
