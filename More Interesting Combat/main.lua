@@ -5,25 +5,32 @@ local version = 1.0
 local common = require('More Interesting Combat.common')
 local multistrike
 local critical
+local bleed
 
 -- counters and refs
 local player
 local multistrikeCounters
-local bleedStacks
 
 -- Load player and init counters/stacks
 local function onLoaded(e)
 	player = tes3.getPlayerRef()
     multistrikeCounters = {}
-    bleedStacks = {}
 end
 
 local function onCombatEnd(e)
     if (e.actor.reference == player) then
         -- reset multistrike counters
         multistrikeCounters = {}
-        -- reset bleed stacks
-        bleedStacks = {}
+        -- remove expose weakness on all currently exposed
+        for targetId,spellId in pairs(common.currentlyExposed) do
+            mwscript.removeSpell({reference = targetId, spell = spellId})
+        end
+        common.currentlyExposed = {}
+        -- remove all bleeds and cancel all timers
+        for targetId,bleedData in pairs(common.currentlyBleeding) do
+            common.currentlyBleeding[targetId].timer:cancel()
+        end
+        common.currentlyBleeding = {}
     end
 end
 
@@ -59,6 +66,11 @@ local function onAttack(e)
             -- we have a hit with damage
             if weapon.object.type > 6 then
                 -- axe
+                local damageDone
+                damageDone = bleed.perform(source, action.physicalDamage, target)
+                if (damageDone ~= nil and source == player) then
+                    damageMessage("Bleeding!", damageDone)
+                end
             elseif weapon.object.type > 5 then
                 -- spear
             elseif weapon.object.type > 2 then
@@ -95,6 +107,7 @@ local function initialized(e)
         -- load modules
         multistrike = require("More Interesting Combat.multistrike")
         critical = require("More Interesting Combat.critical")
+        bleed = require("More Interesting Combat.bleed")
 
 		-- register events
         event.register("loaded", onLoaded)
