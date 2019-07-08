@@ -1,6 +1,6 @@
 # My Morrowind mods
 
-## More Interesting Combat
+## More Interesting Combat (WIP)
 
 A mod to make combat, well, more interesting! It aims to give each weapon type a unique flavour and bonus effects. Each weapon now has unique bonus effects at each weapon skill level tier (25, 50, 75 and 100 respectively).
 
