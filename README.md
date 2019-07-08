@@ -4,7 +4,15 @@
 
 A mod to make combat, well, more interesting! It aims to give each weapon type a unique flavour and bonus effects. Each weapon now has unique bonus effects at each weapon skill level tier (25, 50, 75 and 100 respectively).
 
-**Short blade**
+**Progress**
+
+- [x] Short blade
+- [x] Long blade
+- [ ] Blunt weapon
+- [ ] Axe
+- [ ] Spear
+
+**Short blade** 
 
 Short blade is all about fast and deadly attacks, so short blades can now critical strike and expose weakness of the enemy!
 A Critical strike is bonus 50% damage with increased chance to crit at higher tiers.
