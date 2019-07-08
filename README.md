@@ -9,7 +9,7 @@ A mod to make combat, well, more interesting! It aims to give each weapon type a
 - [x] Short blade
 - [x] Long blade
 - [ ] Blunt weapon
-- [ ] Axe
+- [x] Axe
 - [ ] Spear
 
 **Short blade** 
