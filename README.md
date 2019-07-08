@@ -37,3 +37,23 @@ Bleed is bonus 25% damage over 5 seconds, stacking up to 100% damage over 5 seco
 **Spear**
 
 Spear is all about using superior range and position to your advantage, so spear has higher damage the lower the encumberence of the enemy relative to their total. An starting at weapon skill 50 or higher, has a chance to hamstring the enemy which is a 200 pts burden for 3 seconds. 
+
+## Next Generation Combat (planned)
+
+NGC aims to completely overhaul the combat system in a completely compatible way. In the spirit of many other "always hit" mods,  like Apoapse's Attack and Better Balanced Combat, it will give you 100% hit but without making Sanctuary, Blind, Fortify Attack and Weapon Skill useless. All these will still continue to function in better and more interesting ways.
+
+**Features**
+
+* Complete compatibility - no patches needed for weapoon, race, NPC mods, anything.
+* All attributes and skills in the game are still useful with 100% hit!
+* Works with ranged weapons.
+* Works for all NPCs and creatures in the same, creating a uniform and balanced combat experience.
+* Rebalanced some weapon reach to make things more balanced, this is done programmatically and completely compatible with all weapon and armour rebalance mods. Slightly less range for short blades and slightly more range for spear. This synergises very well with More Interesting Combat unique bonuses for each weapon.
+* Small speed boost for you and all NPCs to make combat more dynamic.
+
+**Attributes and skills**
+
+* __Weapon skill__ along with the changes of More Interesting Combat module, will now give a small damage boost equivalent to about 20pts of Strength at 100.
+* __Sanctuary__ now reduces the damage taken by 1-3% per 10 pts of Sanctuary, making 100 pts of Sanctuary a 10-30% damage reduction. The more Agility you have the more effect Sanctuary will have.
+* __Blind__ will still reduce chance to hit, so you can still miss due to being blinded. But this is far more understandable, if you are blinded, missing at point blank makes more sense. Miss rate at 1% per pt like vanilla, 30 pt Blind will cause someone to have a 30% chance to miss.
+* __Fortify Attack__ will now be a flat damage bonus, 1pt is 1% more damage. Making Fortify Attack still very vuable! This will affect NPCs too, so combat will feel a little faster overall and buffed enemies could be more dangerous.
