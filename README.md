@@ -1,4 +1,12 @@
-# My Morrowind mods
+# Next Generation Combat Project
+
+What is the Next Generation Combat Project? Well, Morrowind combat is old (for some it's aged like a fine wine) but for others they might just want a little more sparkle. Or you just want combat to feel more engaging and dynamic.
+
+The project aims to address several things:
+
+1. Bring Morrowind combat into the next generation by making it a twitch combat system like Oblivion and Skyrim. Without making existing mechanics (skills, attributes, buffs/debuffs) useless or removing them, I want to keep the flavour of the game with the new system. This will be covered *Core* package.
+2. Make combat more dynamic and interesting by adding new mechanics and features to combat. Such as giving each weapon type a bonus effect, something you can build around and look forward to. *More Interesting Combat* aims to cover this.
+3. Every one of these mechanics will be uniform in that it affects every NPC and creature (where applicable to the mechanic) in the game. No weird disconnect between what you can do and what can be done to you, enemies will make combat more dynamic for you because you have to deal with them too.
 
 ## More Interesting Combat (WIP)
 
@@ -38,9 +46,9 @@ Bleed is bonus 25% damage over 5 seconds, stacking up to 100% damage over 5 seco
 
 Spear is all about using superior range and position to your advantage, so spear has higher damage the lower the encumberence of the enemy relative to their total. An starting at weapon skill 50 or higher, has a chance to hamstring the enemy which is a 200 pts burden for 3 seconds. 
 
-## Next Generation Combat (planned)
+## Next Generation Combat Core (planned)
 
-NGC aims to completely overhaul the combat system in a completely compatible way. In the spirit of many other "always hit" mods,  like Apoapse's Attack and Better Balanced Combat, it will give you 100% hit but without making Sanctuary, Blind, Fortify Attack and Weapon Skill useless. All these will still continue to function in better and more interesting ways.
+NGCC aims to completely overhaul the combat system in a completely compatible way. In the spirit of many other "always hit" mods,  like Apoapse's Attack and Better Balanced Combat, it will give you 100% hit but without making Sanctuary, Blind, Fortify Attack and Weapon Skill useless. All these will still continue to function in better and more interesting ways.
 
 **Features**
 
