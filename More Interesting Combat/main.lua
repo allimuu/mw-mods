@@ -6,21 +6,13 @@ local common = require('More Interesting Combat.common')
 local multistrike
 local critical
 local bleed
-
--- counters and refs
-local player
-local multistrikeCounters
-
--- Load player and init counters/stacks
-local function onLoaded(e)
-	player = tes3.getPlayerRef()
-    multistrikeCounters = {}
-end
+local stun
 
 local function onCombatEnd(e)
-    if (e.actor.reference == player) then
+    if (e.actor.reference == tes3.player) then
         -- reset multistrike counters
-        multistrikeCounters = {}
+        common.multistrikeCounters = {}
+        common.currentArmorCache = {}
         -- remove expose weakness on all currently exposed
         for targetId,spellId in pairs(common.currentlyExposed) do
             mwscript.removeSpell({reference = targetId, spell = spellId})
@@ -37,7 +29,7 @@ end
 local function damageMessage(damageType, damageDone)
     if common.config.showMessages then
         local msgString = damageType
-        if common.config.showDamageNumbers then
+        if (common.config.showDamageNumbers and damageDone) then
             msgString = msgString .. " Extra damage: " .. math.round(damageDone, 2)
         end
         tes3.messageBox({ message = msgString })
@@ -47,6 +39,7 @@ end
 local function onAttack(e)
 	--
 	local source = e.reference
+    local sourceActor = source.mobile
     local target = e.targetReference
 	local action = e.mobile.actionData
 	local weapon = e.mobile.readiedWeapon
@@ -64,39 +57,42 @@ local function onAttack(e)
 			-- ignore ranged
         elseif action.physicalDamage > 0 then
             -- we have a hit with damage
+            local damageDone
+            -- get damage after strength mod
+            local damageMod = action.physicalDamage * (0.5 + (sourceActor.strength.current / 100))
             if weapon.object.type > 6 then
                 -- axe
-                local damageDone
-                damageDone = bleed.perform(source, action.physicalDamage, target)
-                if (damageDone ~= nil and source == player) then
+                damageDone = bleed.perform(source, damageMod, target)
+                if (damageDone ~= nil and source == tes3.player) then
                     damageMessage("Bleeding!", damageDone)
                 end
             elseif weapon.object.type > 5 then
                 -- spear
             elseif weapon.object.type > 2 then
                 -- blunt
+                local stunned
+                stunned, damageDone = stun.perform(source, damageMod, target)
+                if (stunned and source == tes3.player) then
+                    damageMessage("Stunned!", damageDone)
+                end
             elseif weapon.object.type > 0 then
                 -- long blade
-                multistrikeCounters = multistrike.checkCounters(source.id, multistrikeCounters)
-                if multistrikeCounters[source.id] == 3 then
-                    local damageDone
-                    damageDone = multistrike.perform(source, action.physicalDamage, target)
-                    multistrikeCounters[source.id] = 0
-                    if source == player then
+                common.multistrikeCounters = multistrike.checkCounters(source.id)
+                if common.multistrikeCounters[source.id] == 3 then
+                    damageDone = multistrike.perform(source, damageMod, target)
+                    common.multistrikeCounters[source.id] = 0
+                    if source == tes3.player then
                         damageMessage("Multistrike!", damageDone)
                     end
                 end
             elseif weapon.object.type > -1 then
                 -- short blade
-                local damageDone
-                damageDone = critical.perform(source, action.physicalDamage, target)
-                if (damageDone ~= nil and source == player) then
+                damageDone = critical.perform(source, damageMod, target)
+                if (damageDone ~= nil and source == tes3.player) then
                     damageMessage("Critical strike!", damageDone)
                 end
             end
         end
-
-		return
     end
 end
 
@@ -108,9 +104,9 @@ local function initialized(e)
         multistrike = require("More Interesting Combat.multistrike")
         critical = require("More Interesting Combat.critical")
         bleed = require("More Interesting Combat.bleed")
+        stun = require("More Interesting Combat.stun")
 
 		-- register events
-        event.register("loaded", onLoaded)
         event.register("combatStopped", onCombatEnd)
         event.register("attack", onAttack)
 

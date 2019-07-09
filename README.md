@@ -8,7 +8,7 @@ A mod to make combat, well, more interesting! It aims to give each weapon type a
 
 - [x] Short blade
 - [x] Long blade
-- [ ] Blunt weapon
+- [x] Blunt weapon
 - [ ] Axe
 - [ ] Spear
 
@@ -25,8 +25,8 @@ Multistrike allows long blades to do bonus damage on each third hit, with the ch
 
 **Blunt weapon**
 
-Blunt weapon is all about brute force, so blunt weapons can now stun and break armor!
-Stun is a 1 second paralyze with higher chance at higher tiers. And starting at weapon skill 50 or higher, increasing disintegrate armor on hit. 
+Blunt weapon is all about brute force, so blunt weapons can now stun and do more damage to armored enemies!
+Stun is a 1 second paralyze with higher chance at higher tiers. And starting at weapon skill 50 or higher, you do more damage per hit the more armor rating the enemy has.
 
 **Axe**
 

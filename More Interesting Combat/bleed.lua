@@ -1,12 +1,12 @@
-this = {}
+local this = {}
 
 local common = require('More Interesting Combat.common')
 
 local function bleedTick(damage, targetActor)
     -- Apply bleed tick damage
-    targetActor:applyHealthDamage(damage, false, false, false)
+    targetActor:applyHealthDamage(damage, false, true, false)
     if common.config.showMessages and common.config.showDamageNumbers then
-        tes3.messageBox({ message = "Bleed tick for " .. damage })
+        tes3.messageBox({ message = "Bleed tick for " .. math.round(damage, 2) })
     end
 end
 
@@ -26,7 +26,7 @@ function this.perform(source, damage, target)
     local damageDone
     local maxStacks = 1
 
-    bleedChanceRoll = math.random(100)
+    local bleedChanceRoll = math.random(100)
     if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
         if common.config.weaponTier4.bleedChance >= bleedChanceRoll then
             damageDone = calcBleedDamage(damage)
@@ -56,12 +56,12 @@ function this.perform(source, damage, target)
             local damageTick = damageDone / 5
             common.currentlyBleeding[target.id] = {
                 stacks = 1,
-                timer = timer.start({ 
-                    duration = 1, 
+                timer = timer.start({
+                    duration = 1,
                     callback = function ()
                         bleedTick(damageTick, targetActor)
-                    end, 
-                    iterations = 5 
+                    end,
+                    iterations = 5
                 })
             }
         elseif common.currentlyBleeding[target.id].timer.state == timer.expired then
@@ -69,12 +69,12 @@ function this.perform(source, damage, target)
             local damageTick = damageDone / 5
             common.currentlyBleeding[target.id] = {
                 stacks = 1,
-                timer = timer.start({ 
-                    duration = 1, 
+                timer = timer.start({
+                    duration = 1,
                     callback = function ()
                         bleedTick(damageTick, targetActor)
-                    end, 
-                    iterations = 5 
+                    end,
+                    iterations = 5
                 })
             }
         else
@@ -85,12 +85,12 @@ function this.perform(source, damage, target)
                 damageDone = damageDone * newStacks
                 local damageTick = damageDone / 5
                 common.currentlyBleeding[target.id].stacks = newStacks
-                common.currentlyBleeding[target.id].timer = timer.start({ 
-                    duration = 1, 
+                common.currentlyBleeding[target.id].timer = timer.start({
+                    duration = 1,
                     callback = function ()
                         bleedTick(damageTick, targetActor)
-                    end, 
-                    iterations = 5 
+                    end,
+                    iterations = 5
                 })
             end
         end

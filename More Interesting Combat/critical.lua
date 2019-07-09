@@ -1,4 +1,4 @@
-this = {}
+local this = {}
 
 local common = require('More Interesting Combat.common')
 
@@ -13,14 +13,13 @@ end
      And 5%, 10% and 20% depending on weapon tier expose weakness
      (Weakness to Normal Weapons).
 --]]
-function this.perform(source, damage, target, exposeWeaknessRefs)
+function this.perform(source, damage, target)
     local sourceActor = source.mobile
     local targetActor = target.mobile
     local weaponSkill = sourceActor.shortBlade.current
     local damageDone
-    local spellRef
 
-    critChanceRoll = math.random(100)
+    local critChanceRoll = math.random(100)
     if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
         if common.config.weaponTier4.criticalStrikeChance >= critChanceRoll then
             damageDone = damage * common.config.criticalStrikeMultiplier
@@ -52,7 +51,7 @@ function this.perform(source, damage, target, exposeWeaknessRefs)
 
     if damageDone ~= nil then
     -- Apply the extra damage to the actor if we have got a crit
-        targetActor:applyHealthDamage(damageDone, false, false, false)
+        targetActor:applyHealthDamage(damageDone, false, true, false)
         return damageDone
     else
         return
