@@ -4,13 +4,14 @@ local this = {
     currentlyBleeding = {},
     currentArmorCache = {},
     multistrikeCounters = {},
+    currentlyRushed = {},
 }
 local defaultConfig = {
     showMessages = true,
     showDamageNumbers = true,
     multistrikeStrikesNeeded = 3,
     multistrikeBonuseDamageMultiplier = 1,
-    criticalStrikeMultiplier = 0.5,
+    criticalStrikeMultiplier = 1,
     bleedMultiplier = 0.25,
     weaponTier1 = {
         weaponSkillMin = 25,
@@ -18,6 +19,7 @@ local defaultConfig = {
         multistrikeDamageMultiplier = 0.1,
         bleedChance = 10,
         stunChance = 10,
+        bonusDamageForFatigueMultiplier = 0.15,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -28,6 +30,8 @@ local defaultConfig = {
         maxBleedStack = 2,
         stunChance = 15,
         bonusArmorDamageMultiplier = 0.2,
+        bonusDamageForFatigueMultiplier = 0.3,
+        adrenalineRushChance = 10,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -38,6 +42,8 @@ local defaultConfig = {
         maxBleedStack = 3,
         stunChance = 20,
         bonusArmorDamageMultiplier = 0.25,
+        bonusDamageForFatigueMultiplier = 0.45,
+        adrenalineRushChance = 20,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -48,6 +54,8 @@ local defaultConfig = {
         maxBleedStack = 4,
         stunChance = 30,
         bonusArmorDamageMultiplier = 0.33,
+        bonusDamageForFatigueMultiplier = 0.6,
+        adrenalineRushChance = 30,
     },
 }
 

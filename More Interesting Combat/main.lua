@@ -7,6 +7,7 @@ local multistrike
 local critical
 local bleed
 local stun
+local momentum
 
 local function onCombatEnd(e)
     if (e.actor.reference == tes3.player) then
@@ -19,7 +20,7 @@ local function onCombatEnd(e)
         end
         common.currentlyExposed = {}
         -- remove all bleeds and cancel all timers
-        for targetId,bleedData in pairs(common.currentlyBleeding) do
+        for targetId,_ in pairs(common.currentlyBleeding) do
             common.currentlyBleeding[targetId].timer:cancel()
         end
         common.currentlyBleeding = {}
@@ -68,6 +69,10 @@ local function onAttack(e)
                 end
             elseif weapon.object.type > 5 then
                 -- spear
+                damageDone = momentum.perform(source, damageMod, target)
+                if (damageDone ~= nil and source == tes3.player and common.config.showDamageNumbers) then
+                    damageMessage("Momentum!", damageDone)
+                end
             elseif weapon.object.type > 2 then
                 -- blunt
                 local stunned
@@ -105,6 +110,7 @@ local function initialized(e)
         critical = require("More Interesting Combat.critical")
         bleed = require("More Interesting Combat.bleed")
         stun = require("More Interesting Combat.stun")
+        momentum = require("More Interesting Combat.momentum")
 
 		-- register events
         event.register("combatStopped", onCombatEnd)
