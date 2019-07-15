@@ -35,13 +35,35 @@ A mod to make combat, well, more interesting! It aims to give each weapon type a
 - [x] Long blade
 - [x] Blunt weapon
 - [x] Axe
-- [ ] Spear
+- [x] Spear
 
 **Short blade** 
 
 Short blade is all about fast and deadly attacks, so short blades can now critical strike and expose weakness of the enemy!
-A Critical strike is bonus 50% damage with increased chance to crit at higher tiers.
-As well as starting at weapon skill 50, debuffs the enemy with Expose Weakness that increases weapon damage until combat ends.
+
+_Details_
+
+A Critical Strike is bonus 100% damage.
+
+**Skill Level 25**
+
+    10% chance to Critical Strike
+
+**Skill Level 50** 
+
+    20% chance to Critical Strike
+    5% Weakness to Weapons On Hit
+
+**Skill Level 75**
+  
+    35% chance to Critical Strike
+    10% Weakness to Weapons On Hit
+
+**Skill Level 100**
+  
+    50% chance to Critical Strike
+    20% Weakness to Weapons On Hit
+
 
 **Long blade**
 
