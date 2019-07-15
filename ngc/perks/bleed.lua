@@ -1,6 +1,6 @@
 local this = {}
 
-local common = require('More Interesting Combat.common')
+local common = require('ngc.common')
 
 local function bleedTick(damage, targetActor)
     -- Apply bleed tick damage

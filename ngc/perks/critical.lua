@@ -1,6 +1,6 @@
 local this = {}
 
-local common = require('More Interesting Combat.common')
+local common = require('ngc.common')
 
 local function castExposeWeakness(target, level)
     mwscript.addSpell({reference = target, spell = 'mic_expose_weakness_' .. level})
@@ -22,24 +22,18 @@ function this.perform(source, damage, target)
     local critChanceRoll = math.random(100)
     if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
         if common.config.weaponTier4.criticalStrikeChance >= critChanceRoll then
-            damageDone = damage * common.config.criticalStrikeMultiplier
+            damageDone = damage * (common.config.criticalStrikeMultiplier + 0.2)
             castExposeWeakness(target, 3)
-            -- simulate the damage done by the critical strike scalilng with expose weakness level
-            damageDone = damageDone * 1.2
         end
     elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
         if common.config.weaponTier3.criticalStrikeChance >= critChanceRoll then
-            damageDone = damage * common.config.criticalStrikeMultiplier
+            damageDone = damage * (common.config.criticalStrikeMultiplier + 0.1)
             castExposeWeakness(target, 2)
-            -- simulate the damage done by the critical strike scalilng with expose weakness level
-            damageDone = damageDone * 1.1
         end
     elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
         if common.config.weaponTier2.criticalStrikeChance >= critChanceRoll then
-            damageDone = damage * common.config.criticalStrikeMultiplier
+            damageDone = damage * (common.config.criticalStrikeMultiplier + 0.05)
             castExposeWeakness(target, 1)
-            -- simulate the damage done by the critical strike scalilng with expose weakness level
-            damageDone = damageDone * 1.05
         end
     elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
         if common.config.weaponTier1.criticalStrikeChance >= critChanceRoll then

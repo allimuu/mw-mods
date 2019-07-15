@@ -1,6 +1,6 @@
 local this = {}
 
-local common = require('More Interesting Combat.common')
+local common = require('ngc.common')
 
 --[[ Check the counters for each referenced source
      increment or reset if already reached 3 hits

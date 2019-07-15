@@ -2,12 +2,29 @@
 local version = 1.0
 
 -- modules
-local common = require('More Interesting Combat.common')
+local common = require('ngc.common')
 local multistrike
 local critical
 local bleed
 local stun
 local momentum
+local attackBonusSpell = "ngc_ready_to_strike"
+
+local function onLoadGame(e)
+    if not mwscript.getSpellEffects({reference = tes3.player, spell = attackBonusSpell}) then
+        mwscript.addSpell({reference = tes3.player, spell = attackBonusSpell})
+    end
+end
+
+local function onActorActivated(e)
+    local hasSpell = mwscript.getSpellEffects({reference = e.reference, spell = attackBonusSpell})
+    if not hasSpell then
+        mwscript.addSpell({reference = e.reference, spell = attackBonusSpell})
+        if common.showDebugMessages then
+            tes3.messageBox({ message = "Adding ready to strike to " .. e.reference.id })
+        end
+    end
+end
 
 local function onCombatEnd(e)
     if (e.actor.reference == tes3.player) then
@@ -79,6 +96,9 @@ local function onAttack(e)
                 stunned, damageDone = stun.perform(source, damageMod, target)
                 if (stunned and source == tes3.player) then
                     damageMessage("Stunned!", damageDone)
+                elseif (source == tes3.player and common.config.showDamageNumbers) then
+                    -- just show extra damage for blunt weapon if no stun
+                    damageMessage("", damageDone)
                 end
             elseif weapon.object.type > 0 then
                 -- long blade
@@ -102,21 +122,23 @@ local function onAttack(e)
 end
 
 local function initialized(e)
-	if tes3.isModActive("More Interesting Combat.esp") then
+	if tes3.isModActive("Next Generation Combat.esp") then
         common.loadConfig()
 
         -- load modules
-        multistrike = require("More Interesting Combat.multistrike")
-        critical = require("More Interesting Combat.critical")
-        bleed = require("More Interesting Combat.bleed")
-        stun = require("More Interesting Combat.stun")
-        momentum = require("More Interesting Combat.momentum")
+        multistrike = require("ngc.perks.multistrike")
+        critical = require("ngc.perks.critical")
+        bleed = require("ngc.perks.bleed")
+        stun = require("ngc.perks.stun")
+        momentum = require("ngc.perks.momentum")
 
-		-- register events
+        -- register events
+        event.register("loaded", onLoadGame)
+        event.register("mobileActivated", onActorActivated)
         event.register("combatStopped", onCombatEnd)
         event.register("attack", onAttack)
 
-		mwse.log("[More Interesting Combat] Initialized version v%d", version)
+		mwse.log("[Next Generation Combat] Initialized version v%d", version)
         mwse.log(json.encode(common.config, {indent=true}))
 	end
 end

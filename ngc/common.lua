@@ -9,13 +9,14 @@ local this = {
 local defaultConfig = {
     showMessages = true,
     showDamageNumbers = true,
+    showDebugMessages = true,
     multistrikeStrikesNeeded = 3,
     multistrikeBonuseDamageMultiplier = 1,
     criticalStrikeMultiplier = 1,
-    bleedMultiplier = 0.25,
+    bleedMultiplier = 0.3,
     weaponTier1 = {
         weaponSkillMin = 25,
-        criticalStrikeChance = 10,
+        criticalStrikeChance = 5,
         multistrikeDamageMultiplier = 0.1,
         bleedChance = 10,
         stunChance = 10,
@@ -23,7 +24,7 @@ local defaultConfig = {
     },
     weaponTier2 = {
         weaponSkillMin = 50,
-        criticalStrikeChance = 20,
+        criticalStrikeChance = 10,
         multistrikeBonusChance = 5,
         multistrikeDamageMultiplier = 0.2,
         bleedChance = 20,
@@ -35,7 +36,7 @@ local defaultConfig = {
     },
     weaponTier3 = {
         weaponSkillMin = 75,
-        criticalStrikeChance = 30,
+        criticalStrikeChance = 20,
         multistrikeBonusChance = 10,
         multistrikeDamageMultiplier = 0.35,
         bleedChance = 30,
@@ -63,12 +64,12 @@ local defaultConfig = {
 function this.loadConfig()
 	this.config = defaultConfig
 
-	local configJson = mwse.loadConfig("More Interesting Combat")
+	local configJson = mwse.loadConfig('ngc')
 	if (configJson ~= nil) then
 		this.config = configJson
 	end
 
-	mwse.log("[More Interesting Combat] Loaded configuration:")
+	mwse.log("[Next Generation Combat] Loaded configuration:")
 	mwse.log(json.encode(this.config, { indent = true }))
 end
 

@@ -1,6 +1,6 @@
 local this = {}
 
-local common = require('More Interesting Combat.common')
+local common = require('ngc.common')
 
 local function bonusDamageForFatigue(targetActor, sourceActor, damage, damageMod)
     -- calculate the bonus damage based on fatigue of target
