@@ -1,29 +1,23 @@
-# Next Generation Combat Project
+# Next Generation Combat
 
-What is the Next Generation Combat Project? Well, Morrowind combat is old (for some it's aged like a fine wine) but for others they might just want a little more sparkle. Or you just want combat to feel more engaging and dynamic.
-
-The project aims to address several things:
-
-1. Bring Morrowind combat into the next generation by making it a twitch combat system like Oblivion and Skyrim. Without making existing mechanics (skills, attributes, buffs/debuffs) useless or removing them, I want to keep the flavour of the game with the new system.
-2. Make combat more dynamic and interesting by adding new mechanics and features to combat. Such as giving each weapon type a bonus effect or chance on hit, something you can build around and look forward to. 
-
-NGC aims to completely overhaul the combat system in a completely compatible way. In the spirit of many other "always hit" mods,  like Apoapse's Attack and Better Balanced Combat, it will give you 100% hit but without making Sanctuary, Blind, Fortify Attack and Weapon Skill useless. All these will still continue to function in better and more interesting ways.
+Brings Morrowind combat into the next generation!
 
 **Features**
 
 * Complete compatibility - no patches needed for weapoon, race, NPC mods, anything.
 * All attributes and skills in the game are still useful with 100% hit!
+* Unique and interesting weapon perks to make combat more dynamic! (See beloww)
 * Works with ranged weapons.
 * Works for all NPCs and creatures in the same, creating a uniform and balanced combat experience.
-* Rebalanced some weapon reach to make things more balanced, this is done programmatically and completely compatible with all weapon and armour rebalance mods. Slightly less range for short blades and slightly more range for spear. This synergises very well with More Interesting Combat unique bonuses for each weapon.
+* Rebalanced some weapon reach to make things more balanced, this is done programmatically and completely compatible with all weapon and armour rebalance mods.
 * Small speed boost for you and all NPCs to make combat more dynamic.
 
-**Attributes and skills**
+## Attributes and skills
 
-* __Weapon skill__ along with the changes of More Interesting Combat module, will now give a small damage boost equivalent to about 20pts of Strength at 100.
+* __Weapon skill__ along with the weapon perks every 25 levels (see below), will now give a small damage boost equivalent to about 20% extra damage at 100. (This affects NPCs/creatures too)
+* __Fortify Attack__ will now give a flat damage bonus, 1pt is 0.5% more damage. Making Fortify Attack still very valuable! This will affect NPCs/creatures too, so combat will feel a little faster overall.
 * __Sanctuary__ now reduces the damage taken by 1-3% per 10 pts of Sanctuary, making 100 pts of Sanctuary a 10-30% damage reduction. The more Agility you have the more effect Sanctuary will have.
 * __Blind__ will still reduce chance to hit, so you can still miss due to being blinded. But this is far more understandable, if you are blinded, missing at point blank makes more sense. Miss rate at 1% per pt like vanilla, 30 pt Blind will cause someone to have a 30% chance to miss.
-* __Fortify Attack__ will now be a flat damage bonus, 1pt is 1% more damage. Making Fortify Attack still very vuable! This will affect NPCs too, so combat will feel a little faster overall and buffed enemies could be more dangerous.
 
 ## Weapon perks
 
