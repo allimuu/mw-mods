@@ -15,9 +15,6 @@ local function calcBleedDamage(damage)
 end
 
 --[[ Perform bleed (axe)
-     A bleed is 25% extra damage over 5 seconds for a single stack.
-     It can stack up to 4 times at highest weapon level tier, for a total
-     100% extra damage over 5 seconds.
 --]]
 function this.perform(source, damage, target)
     local sourceActor = source.mobile

@@ -25,17 +25,7 @@ NGC aims to completely overhaul the combat system in a completely compatible way
 * __Blind__ will still reduce chance to hit, so you can still miss due to being blinded. But this is far more understandable, if you are blinded, missing at point blank makes more sense. Miss rate at 1% per pt like vanilla, 30 pt Blind will cause someone to have a 30% chance to miss.
 * __Fortify Attack__ will now be a flat damage bonus, 1pt is 1% more damage. Making Fortify Attack still very vuable! This will affect NPCs too, so combat will feel a little faster overall and buffed enemies could be more dangerous.
 
-## More interesting combat mechanics (WIP)
-
-A mod to make combat, well, more interesting! It aims to give each weapon type a unique flavour and bonus effects. Each weapon now has unique bonus effects at each weapon skill level tier (25, 50, 75 and 100 respectively).
-
-**Progress**
-
-- [x] Short blade
-- [x] Long blade
-- [x] Blunt weapon
-- [x] Axe
-- [x] Spear
+## Weapon perks
 
 **Short blade** 
 
@@ -47,40 +37,130 @@ A Critical Strike is bonus 100% damage.
 
 **Skill Level 25**
 
-    10% chance to Critical Strike
+    5% chance to Critical Strike
 
 **Skill Level 50** 
 
-    20% chance to Critical Strike
+    10% chance to Critical Strike
     5% Weakness to Weapons On Hit
 
 **Skill Level 75**
   
-    35% chance to Critical Strike
+    20% chance to Critical Strike
     10% Weakness to Weapons On Hit
 
 **Skill Level 100**
   
-    50% chance to Critical Strike
+    30% chance to Critical Strike
     20% Weakness to Weapons On Hit
 
 
 **Long blade**
 
 Long blade is all about precision and skill, so long blades now have multistrike!
-Multistrike allows long blades to do bonus damage on each third hit, with the chance starting at weapon skill 50 or higher, to do douoble damage on the third hit.
+
+_Details_
+
+Every third hit is a Multistrike, with a chance to do double damage on top of the bonus damage.
+
+**Skill Level 25**
+
+    10% bonus damage every on third hit
+
+**Skill Level 50** 
+
+    20% bonus damage every on third hit
+    5% chance for double damage
+
+**Skill Level 75**
+  
+    35% bonus damage every on third hit
+    10% chance for double damage
+
+**Skill Level 100**
+  
+    50% bonus damage every on third hit
+    20% chance for double damage
 
 **Blunt weapon**
 
 Blunt weapon is all about brute force, so blunt weapons can now stun and do more damage to armored enemies!
-Stun is a 1 second paralyze with higher chance at higher tiers. And starting at weapon skill 50 or higher, you do more damage per hit the more armor rating the enemy has.
+
+_Details_
+
+Every hit does more damage the more armor rating your opponent has, plus a chance to stun (1 second paralyze) on hit.
+
+**Skill Level 25**
+
+    10% chance to stun
+
+**Skill Level 50** 
+
+    15% chance to stun
+    0.2% bonus damage per point of enemy Armor Rating
+
+**Skill Level 75**
+  
+    20% chance to stun
+    0.25% bonus damage per point of enemy Armor Rating
+
+**Skill Level 100**
+  
+    30% chance to stun
+    0.33% bonus damage per point of enemy Armor Rating
 
 **Axe**
 
 Axe is all about slashing through the enemies protection, so axe can now bleed!
-Axe has an increasing chance to bleed at higher tiers, and starting at weapon skill 50 or higher, increased the number of bleed stacks up to 4 maximum stacks of bleed.
-Bleed is bonus 25% damage over 5 seconds, stacking up to 100% damage over 5 seconds.
+
+_Details_
+
+Bleed is 30% bonus damage over 5 seconds. Stacking up to 4 times at max level.
+
+**Skill Level 25**
+
+    10% chance to bleed
+
+**Skill Level 50** 
+
+    20% chance to bleed
+    Bleed stacks up to 2 times
+
+**Skill Level 75**
+  
+    30% chance to bleed
+    Bleed stacks up to 3 times
+
+**Skill Level 100**
+  
+    35% chance to bleed
+    Bleed stacks up to 4 times
 
 **Spear**
 
-Spear is all about using superior range and position to your advantage, so spear has higher damage the lower the encumberence of the enemy relative to their total. An starting at weapon skill 50 or higher, has a chance to hamstring the enemy which is a 200 pts burden for 3 seconds. 
+Spear is about maintaing tactical advange over your opponent with momentum and range, so spear gains bonus damage against more heavily fatigued opponents. And chance to get an Adrenaline Rush as you press the advantage which recovers a lot of fatigue.
+
+_Details_
+
+Adrenaline Rush is 50 pts Restore Fatigue for 3 seconds.
+
+Momemntum is when you have higher percentage remaining fatigue than your enemy. (I.e. you have 50/100 fatigue and your enemy has 30/100)
+
+**Skill Level 25**
+
+    15% bonus damage per hit if you have Momentum
+
+**Skill Level 50** 
+
+    30% bonus damage per hit if you have Momentum
+    10% chance to gain Adrenaline Rush
+
+**Skill Level 75**
+  
+    45% bonus damage per hit if you have Momentum
+    20% chance to gain Adrenaline Rush
+
+**Skill Level 100**
+  
+    60% bonus damage per hit if you have Momentum
+    30% chance to gain Adrenaline Rush

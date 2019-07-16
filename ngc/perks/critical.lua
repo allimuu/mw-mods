@@ -9,9 +9,6 @@ end
 
 
 --[[ Perform critical strike (short blades)
-     A critical strike 50% more damage on a hit. 
-     And 5%, 10% and 20% depending on weapon tier expose weakness
-     (Weakness to Normal Weapons).
 --]]
 function this.perform(source, damage, target)
     local sourceActor = source.mobile

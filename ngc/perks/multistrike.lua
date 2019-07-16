@@ -26,9 +26,6 @@ local function bonusDamage(damage)
 end
 
 --[[ Perform multistrike (long blades)
-     A multistrike is 10%, 20%, 30% or 50% more damage depending
-     on weapon tier. With 5%, 10% or 20% chance to be 100% more 
-     damage instead, in the last three tiers.
 --]]
 function this.perform(source, damage, target)
     local sourceActor = source.mobile

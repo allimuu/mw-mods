@@ -44,13 +44,6 @@ local function castStun(targetActor)
 end
 
 --[[ Perform a stun and bonus armor damage (blunt weapon)
-     A stun is a 1 second paralyze with higher chance per weapon tier.
-     And bonus damage depending on how high the target's armor rating is (not including shields).
-     At weapon skill 100, bonus damage is 0.33% per point of AR.
-     So at 300 AR it rounds out to 100% bonus damage (very rare and only the tankiest).
-     At 150 AR (far more common), roughly 50% bonus damage.
-     At 100 or less AR (very common), 33% bonus damage right down to 0% bonus damage
-     for unarmored targets.
 --]]
 function this.perform(source, damage, target)
     local sourceActor = source.mobile
