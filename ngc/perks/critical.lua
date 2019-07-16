@@ -10,10 +10,8 @@ end
 
 --[[ Perform critical strike (short blades)
 --]]
-function this.perform(source, damage, target)
-    local sourceActor = source.mobile
+function this.perform(damage, target, weaponSkill)
     local targetActor = target.mobile
-    local weaponSkill = sourceActor.shortBlade.current
     local damageDone
 
     local critChanceRoll = math.random(100)

@@ -32,10 +32,9 @@ end
 
 --[[ Perform momentum damage
 --]]
-function this.perform(source, damage, target)
+function this.perform(source, damage, target, weaponSkill)
     local sourceActor = source.mobile
     local targetActor = target.mobile
-    local weaponSkill = sourceActor.spear.current
     local damageDone
 
     local rushChanceRoll = math.random(100)

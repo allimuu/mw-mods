@@ -27,10 +27,8 @@ end
 
 --[[ Perform multistrike (long blades)
 --]]
-function this.perform(source, damage, target)
-    local sourceActor = source.mobile
+function this.perform(damage, target, weaponSkill)
     local targetActor = target.mobile
-    local weaponSkill = sourceActor.longBlade.current
     local damageDone = damage
 
     local bonusDamageRoll = math.random(100)
