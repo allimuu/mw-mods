@@ -98,8 +98,13 @@ local function onAttack(e)
     if source and weapon and target then
         if action.physicalDamage == 0 then
 			-- ignore misses
-		elseif weapon.object.type > 8 then
-			-- ignore ranged
+        elseif weapon.object.type > 8 then
+            -- ranged hit
+            local weaponSkill = sourceActor.marksman.current
+            -- get damage after strength mod
+            local damageMod = action.physicalDamage * (0.5 + (sourceActor.strength.current / 100))
+            -- core bonus damage for ranged hits
+            coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
         elseif action.physicalDamage > 0 then
             -- we have a hit with damage
             local damageDone
@@ -162,6 +167,10 @@ local function onAttack(e)
             end
         end
     end
+end
+
+local function onDamage(e)
+    tes3.messageBox({ message = "Attacked by: " .. e.attackerReference.id })
 end
 
 local function initialized(e)
