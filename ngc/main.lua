@@ -170,7 +170,47 @@ local function onAttack(e)
 end
 
 local function onDamage(e)
-    tes3.messageBox({ message = "Attacked by: " .. e.attackerReference.id })
+    local attacker = e.attacker
+    local defender = e.mobile
+    local damageReduced
+
+    if attacker then
+        -- roll for blind first
+        if attacker.blind > 0 then
+            local missChanceRoll = math.random(100)
+            if attacker.blind >= missChanceRoll then
+                -- you blind, you miss
+                if (common.config.showMessages and e.attackerReference == tes3.player) then
+                    tes3.messageBox({ message = "Missed!" })
+                end
+                -- no damage
+                return
+            end
+        end
+    end
+
+    if defender then
+        -- reduction from sanctuary
+        local scantuaryMod = (defender.agility.current * common.config.sanctuaryModifier) / 100
+        local reductionFromSanctuary
+        if (scantuaryMod >= 0.1) then
+            reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100
+        else
+            reductionFromSanctuary = (defender.sanctuary * 0.1) / 100 -- minimum sanctuary reduction
+        end
+
+        if reductionFromSanctuary then
+            damageReduced = e.damage * reductionFromSanctuary
+        end
+    end
+
+    -- if we have damage reduction
+    if damageReduced then
+        e.damage = e.damage - damageReduced
+        if common.config.showDebugMessages then
+            tes3.messageBox({ message = "Damage reduced: " .. damageReduced })
+        end
+    end
 end
 
 local function initialized(e)

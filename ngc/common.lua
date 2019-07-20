@@ -14,6 +14,7 @@ local defaultConfig = {
     toggleWeaponPerks = true,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,
+    sanctuaryModifier = 0.5,
     multistrikeStrikesNeeded = 3,
     multistrikeBonuseDamageMultiplier = 1,
     criticalStrikeMultiplier = 1,
