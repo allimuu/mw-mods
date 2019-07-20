@@ -76,58 +76,71 @@ local function coreBonusDamage(damage, targetActor, weaponoSkillLevel, attackBon
     targetActor:applyHealthDamage(damageMod, false, true, false)
 end
 
+local function strengthModifier(physicalDamage, strength)
+    return physicalDamage * (0.5 + (strength / 100))
+end
+
 -- perform weapon perks
 local function onAttack(e)
 	--
 	local source = e.reference
     local sourceActor = source.mobile
     local target = e.targetReference
-    local targetActor = target.mobile
 	local action = e.mobile.actionData
     local weapon = e.mobile.readiedWeapon
 
     -- core damage values
     local sourceAttackBonus = sourceActor.attackBonus
 
-    if e.mobile.actorType == 0 then
-        -- ignore creatures
+    if (source and target and e.mobile.actorType == 0) then
+        local targetActor = target.mobile
+        -- standard creature bonus
+        local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
+        local damageDone = damageMod * ((sourceActor.strength.current * common.config.creatureBonusModifier) / 100)
+        targetActor:applyHealthDamage(damageDone, false, true, false)
         return
     end
 
     -- handle player/NPC attacks
     if source and weapon and target then
+        local targetActor = target.mobile
+
         if action.physicalDamage == 0 then
 			-- ignore misses
         elseif weapon.object.type > 8 then
             -- ranged hit
             local weaponSkill = sourceActor.marksman.current
             -- get damage after strength mod
-            local damageMod = action.physicalDamage * (0.5 + (sourceActor.strength.current / 100))
+            local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
             -- core bonus damage for ranged hits
             coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
         elseif action.physicalDamage > 0 then
             -- we have a hit with damage
             local damageDone
             -- get damage after strength mod
-            local damageMod = action.physicalDamage * (0.5 + (sourceActor.strength.current / 100))
+            local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
 
             if weapon.object.type > 6 then
                 -- axe
                 local weaponSkill = sourceActor.axe.current
                 coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
 
-                damageDone = bleed.perform(damageMod, target, weaponSkill)
-                if (damageDone ~= nil and source == tes3.player) then
-                    damageMessage("Bleeding!", damageDone)
+                if common.config.toggleWeaponPerks then
+                    damageDone = bleed.perform(damageMod, target, weaponSkill)
+                    if (damageDone ~= nil and source == tes3.player) then
+                        damageMessage("Bleeding!", damageDone)
+                    end
                 end
             elseif weapon.object.type > 5 then
                 -- spear
                 local weaponSkill = sourceActor.spear.current
                 coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
 
-                damageDone = momentum.perform(source, damageMod, target, weaponSkill)
-                if (damageDone ~= nil and source == tes3.player and common.config.showDamageNumbers) then
-                    damageMessage("Momentum!", damageDone)
+                if common.config.toggleWeaponPerks then
+                    damageDone = momentum.perform(source, damageMod, target, weaponSkill)
+                    if (damageDone ~= nil and source == tes3.player and common.config.showDamageNumbers) then
+                        damageMessage("Momentum!", damageDone)
+                    end
                 end
             elseif weapon.object.type > 2 then
                 -- blunt
@@ -135,24 +148,28 @@ local function onAttack(e)
                 local stunned
                 coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
 
-                stunned, damageDone = stun.perform(damageMod, target, weaponSkill)
-                if (stunned and source == tes3.player) then
-                    damageMessage("Stunned!", damageDone)
-                elseif (source == tes3.player and common.config.showDamageNumbers) then
-                    -- just show extra damage for blunt weapon if no stun
-                    damageMessage("", damageDone)
+                if common.config.toggleWeaponPerks then
+                    stunned, damageDone = stun.perform(damageMod, target, weaponSkill)
+                    if (stunned and source == tes3.player) then
+                        damageMessage("Stunned!", damageDone)
+                    elseif (source == tes3.player and common.config.showDamageNumbers) then
+                        -- just show extra damage for blunt weapon if no stun
+                        damageMessage("", damageDone)
+                    end
                 end
             elseif weapon.object.type > 0 then
                 -- long blade
                 local weaponSkill = sourceActor.longBlade.current
                 coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
 
-                common.multistrikeCounters = multistrike.checkCounters(source.id)
-                if common.multistrikeCounters[source.id] == 3 then
-                    damageDone = multistrike.perform(damageMod, target, weaponSkill)
-                    common.multistrikeCounters[source.id] = 0
-                    if source == tes3.player then
-                        damageMessage("Multistrike!", damageDone)
+                if common.config.toggleWeaponPerks then
+                    common.multistrikeCounters = multistrike.checkCounters(source.id)
+                    if common.multistrikeCounters[source.id] == 3 then
+                        damageDone = multistrike.perform(source, damageMod, target, weaponSkill)
+                        common.multistrikeCounters[source.id] = 0
+                        if source == tes3.player then
+                            damageMessage("Multistrike!", damageDone)
+                        end
                     end
                 end
             elseif weapon.object.type > -1 then
@@ -160,9 +177,11 @@ local function onAttack(e)
                 local weaponSkill = sourceActor.shortBlade.current
                 coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
 
-                damageDone = critical.perform(damageMod, target, weaponSkill)
-                if (damageDone ~= nil and source == tes3.player) then
-                    damageMessage("Critical strike!", damageDone)
+                if common.config.toggleWeaponPerks then
+                    damageDone = critical.perform(damageMod, target, weaponSkill)
+                    if (damageDone ~= nil and source == tes3.player) then
+                        damageMessage("Critical strike!", damageDone)
+                    end
                 end
             end
         end
@@ -191,7 +210,7 @@ local function onDamage(e)
 
     if defender then
         -- reduction from sanctuary
-        local scantuaryMod = (defender.agility.current * common.config.sanctuaryModifier) / 100
+        local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
         local reductionFromSanctuary
         if (scantuaryMod >= 0.1) then
             reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100

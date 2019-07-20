@@ -21,32 +21,35 @@ function this.checkCounters(ref)
     return counters
 end
 
-local function bonusDamage(damage)
+local function bonusDamage(source, damage)
+    if (common.config.showMessages and source == tes3.player) then
+        tes3.messageBox({ message = "Double damage!" })
+    end
     return damage * common.config.multistrikeBonuseDamageMultiplier
 end
 
 --[[ Perform multistrike (long blades)
 --]]
-function this.perform(damage, target, weaponSkill)
+function this.perform(source, damage, target, weaponSkill)
     local targetActor = target.mobile
     local damageDone = damage
 
     local bonusDamageRoll = math.random(100)
     if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
         if common.config.weaponTier4.multistrikeBonusChance >= bonusDamageRoll then
-            damageDone = bonusDamage(damageDone)
+            damageDone = bonusDamage(source, damageDone)
         else
             damageDone = damageDone * common.config.weaponTier4.multistrikeDamageMultiplier
         end
     elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
         if common.config.weaponTier3.multistrikeBonusChance >= bonusDamageRoll then
-            damageDone = bonusDamage(damageDone)
+            damageDone = bonusDamage(source, damageDone)
         else
             damageDone = damageDone * common.config.weaponTier3.multistrikeDamageMultiplier
         end
     elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
         if common.config.weaponTier2.multistrikeBonusChance >= bonusDamageRoll then
-            damageDone = bonusDamage(damageDone)
+            damageDone = bonusDamage(source, damageDone)
         else
             damageDone = damageDone * common.config.weaponTier2.multistrikeDamageMultiplier
         end

@@ -32,21 +32,21 @@ A Critical Strike is bonus 100% damage.
 
 **Skill Level 25**
 
-    5% chance to Critical Strike
+    10% chance to Critical Strike
 
 **Skill Level 50** 
 
-    10% chance to Critical Strike
+    20% chance to Critical Strike
     5% Weakness to Weapons On Hit
 
 **Skill Level 75**
   
-    20% chance to Critical Strike
+    35% chance to Critical Strike
     10% Weakness to Weapons On Hit
 
 **Skill Level 100**
   
-    30% chance to Critical Strike
+    50% chance to Critical Strike
     20% Weakness to Weapons On Hit
 
 
