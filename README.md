@@ -10,23 +10,22 @@ Brings Morrowind combat into the next generation!
 * Unique and interesting weapon perks to make combat more interesting! (See below)
 * Works with ranged weapons.
 * Everything works for all NPCs and creatures the same, creating a uniform and balanced combat experience.
+* Creatures have a unique damage scaling formula where the more Strength they have the more damage they do - this makes creatures a little more balanced with all the other changes
 
 ## Attributes and skills
 
 * __Weapon skill__ along with the weapon perks every 25 levels (see below), will now give a small damage boost equivalent to 20% extra damage at 100 (0.2% per level). (This affects NPCs/creatures too)
 * __Fortify Attack__ will now give a flat damage bonus, 1pt is 0.5% more damage. Making Fortify Attack still very valuable! This will affect NPCs/creatures too, so combat will feel a little faster overall.
-* __Sanctuary__ now reduces the damage taken by 1-3% per 10 pts of Sanctuary, making 100 pts of Sanctuary a 10-30% damage reduction. The more Agility you have the more effect Sanctuary will have.
-* __Blind__ will still reduce chance to hit, so you can still miss due to being blinded. But this is far more understandable, if you are blinded, missing at point blank makes more sense. Miss rate at 1% per pt like vanilla, 30 pt Blind will cause someone to have a 30% chance to miss.
+* __Sanctuary__ now reduces the damage taken by instead. The more Agility and Luck you have the more effect Sanctuary will have. (Example: At 50 Agility and 30 Luck, a 30pt Sanctuary spell will give you 5% damage reduction. At 100 Agility and 70 Luck, 30pt Sanctuary is 15% damage reduction)
+* __Blind__ will still reduce chance to hit, so you can still miss due to being blinded (you will see a message if you do). But this is far more understandable, if you are blinded, missing at point blank makes more sense. Miss rate at 1% per pt like vanilla, 30 pt Blind will cause someone to have a 30% chance to miss.
 
 ## Weapon perks
 
+Weapon perks give you unique bonuses for each weapon at skill level 25, 50, 75 and 100.
+
 **Short blade** 
 
-Short blade is all about fast and deadly attacks, so short blades can now critical strike and expose weakness of the enemy!
-
-_Details_
-
-A Critical Strike is bonus 100% damage.
+Short blades are about fast and deadly strikes, they now have a chance to Critical Strike (100% bonus damage) and cause Weakness to Weapons on each hit.
 
 **Skill Level 25**
 
@@ -50,11 +49,7 @@ A Critical Strike is bonus 100% damage.
 
 **Long blade**
 
-Long blade is all about precision and skill, so long blades now have multistrike!
-
-_Details_
-
-Every third hit is a Multistrike, with a chance to do double damage on top of the bonus damage.
+Long blades are about precise powerful attacks, they now Multistrike on each 3rd hit causing more damage, with a chance to to do double damage on that hit.
 
 **Skill Level 25**
 
@@ -77,11 +72,7 @@ Every third hit is a Multistrike, with a chance to do double damage on top of th
 
 **Blunt weapon**
 
-Blunt weapon is all about brute force, so blunt weapons can now stun and do more damage to armored enemies!
-
-_Details_
-
-Every hit does more damage the more armor rating your opponent has, plus a chance to stun (1 second paralyze) on hit.
+Blunt weapons are naturally stronger against armored targets (doing bonus damage on hit the more armor an enemy has) and have a chance to temporarily stun the enemy with their brute force (paralyze the enemy for 1 sec).
 
 **Skill Level 25**
 
@@ -104,11 +95,7 @@ Every hit does more damage the more armor rating your opponent has, plus a chanc
 
 **Axe**
 
-Axe is all about slashing through the enemies protection, so axe can now bleed!
-
-_Details_
-
-Bleed is 30% bonus damage over 5 seconds. Stacking up to 4 times at max level.
+Axes will slash and tear the enemy causing bleeding (30% bonus damage over 5 seconds).
 
 **Skill Level 25**
 
@@ -131,13 +118,7 @@ Bleed is 30% bonus damage over 5 seconds. Stacking up to 4 times at max level.
 
 **Spear**
 
-Spear is about maintaing tactical advange over your opponent with momentum and range, so spear gains bonus damage against more heavily fatigued opponents. And chance to get an Adrenaline Rush as you press the advantage which recovers a lot of fatigue.
-
-_Details_
-
-Adrenaline Rush is 50 pts Restore Fatigue for 3 seconds.
-
-Momemntum is when you have higher percentage remaining fatigue than your enemy. (I.e. you have 50/100 fatigue and your enemy has 30/100)
+Spear is a tactical weapon with it you can maintain advantage by gaining Momentum (bonus damage per hit if you have more total percentage fatigue than your enemy) and a chance to gain Adrenaline Rush on hit (50pts Restore Fatigue for 3 seconds).
 
 **Skill Level 25**
 
@@ -157,3 +138,31 @@ Momemntum is when you have higher percentage remaining fatigue than your enemy. 
   
     60% bonus damage per hit if you have Momentum
     30% chance to gain Adrenaline Rush
+
+## Installation
+
+To install the mod, extract the archive into your Morrowind Data Files folder or use a mod organiser like MO2. 
+
+Activate the .esp, it can be anywhere in your load order.
+
+Requires latest MGE XE﻿ and the latest MWSE 2.1﻿ (if you already have MWSE installed, run MWSE-Update.exe inside your Morrowind folder to update it to the latest. This is NOT optional, you need the latest MWSE).
+
+## Configuration
+
+Important! Please only edit this if you know what you are doing editing JSON!
+
+You can configure the mod by editing the configuration file in:
+
+Data Files/MWSE/config/ngc.json
+
+Here you can turn on more messaging:
+
+showDamageNumbers - shows you extra info about how much extra damage you do
+showDebugMessages - Note this is very spammy! But it will show everything if you want to debug something.
+
+Tweak damage values:
+
+weaponSkillModifier and attackBonusModifier control how much bonus damage you get from having weapon skill and attack bonus (scaled up to 100)
+creatureBonusModifier is how much bonus damage from strength creatures get
+All weapon perks are seperated into weaponTier1, 2, 3 and 4 for each respective tier
+You can edit roll chances and modifiers here
