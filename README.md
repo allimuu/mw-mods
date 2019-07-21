@@ -7,11 +7,9 @@ Brings Morrowind combat into the next generation!
 * 100% chance to hit
 * All attributes and skills in the game are still useful with 100% hit! (See below)
 * Complete compatibility - no patches needed for weapoon, race, NPC mods, anything.
-* Unique and interesting weapon perks to make combat more dynamic! (See below)
+* Unique and interesting weapon perks to make combat more interesting! (See below)
 * Works with ranged weapons.
 * Everything works for all NPCs and creatures the same, creating a uniform and balanced combat experience.
-* Rebalanced some weapon reach to make things more balanced, this is done programmatically and completely compatible with all weapon and armour rebalance mods.
-* Small speed boost for you and all NPCs to make combat more dynamic.
 
 ## Attributes and skills
 

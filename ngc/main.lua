@@ -76,6 +76,7 @@ local function coreBonusDamage(damage, targetActor, weaponoSkillLevel, attackBon
     targetActor:applyHealthDamage(damageMod, false, true, false)
 end
 
+-- vanilla game strength modifier
 local function strengthModifier(physicalDamage, strength)
     return physicalDamage * (0.5 + (strength / 100))
 end
@@ -97,6 +98,9 @@ local function onAttack(e)
         -- standard creature bonus
         local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
         local damageDone = damageMod * ((sourceActor.strength.current * common.config.creatureBonusModifier) / 100)
+        if common.config.showDebugMessages then
+            tes3.messageBox({ message = "Bonus creature hit damage: " .. damageDone })
+        end
         targetActor:applyHealthDamage(damageDone, false, true, false)
         return
     end
@@ -193,7 +197,7 @@ local function onDamage(e)
     local defender = e.mobile
     local damageReduced
 
-    if attacker then
+    if attacker and e.source == 'attack' then
         -- roll for blind first
         if attacker.blind > 0 then
             local missChanceRoll = math.random(100)
@@ -208,7 +212,7 @@ local function onDamage(e)
         end
     end
 
-    if defender then
+    if defender and e.source == 'attack' then
         -- reduction from sanctuary
         local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
         local reductionFromSanctuary
@@ -224,7 +228,7 @@ local function onDamage(e)
     end
 
     -- if we have damage reduction
-    if damageReduced then
+    if damageReduced and e.source == 'attack' then
         e.damage = e.damage - damageReduced
         if common.config.showDebugMessages then
             tes3.messageBox({ message = "Damage reduced: " .. damageReduced })

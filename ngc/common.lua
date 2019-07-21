@@ -8,10 +8,10 @@ local this = {
 }
 local defaultConfig = {
     showMessages = true,
-    showDamageNumbers = true,
+    showDamageNumbers = false,
     showDebugMessages = false,
     toggleWeaponPerks = true,
-    creatureBonusModifier = 0.5,
+    creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,
     sanctuaryModifier = 0.35,
