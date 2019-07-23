@@ -30,8 +30,7 @@ end
 
 --[[ Perform multistrike (long blades)
 --]]
-function this.perform(source, damage, target, weaponSkill)
-    local targetActor = target.mobile
+function this.perform(damage, source, weaponSkill)
     local damageDone = damage
 
     local bonusDamageRoll = math.random(100)
@@ -55,12 +54,8 @@ function this.perform(source, damage, target, weaponSkill)
         end
     elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
         damageDone = damageDone * common.config.weaponTier1.multistrikeDamageMultiplier
-    else
-        return
     end
 
-    -- Apply the extra damage to the actor
-    targetActor:applyHealthDamage(damageDone, false, true, false)
     return damageDone
 end
 

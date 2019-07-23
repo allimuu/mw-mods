@@ -11,7 +11,6 @@ end
 --[[ Perform critical strike (short blades)
 --]]
 function this.perform(damage, target, weaponSkill)
-    local targetActor = target.mobile
     local damageDone
 
     local critChanceRoll = math.random(100)
@@ -34,17 +33,9 @@ function this.perform(damage, target, weaponSkill)
         if common.config.weaponTier1.criticalStrikeChance >= critChanceRoll then
             damageDone = damage * common.config.criticalStrikeMultiplier
         end
-    else
-        return
     end
 
-    if damageDone ~= nil then
-    -- Apply the extra damage to the actor if we have got a crit
-        targetActor:applyHealthDamage(damageDone, false, true, false)
-        return damageDone
-    else
-        return
-    end
+    return damageDone
 end
 
 return this

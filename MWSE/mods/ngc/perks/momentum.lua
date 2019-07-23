@@ -32,9 +32,7 @@ end
 
 --[[ Perform momentum damage
 --]]
-function this.perform(source, damage, target, weaponSkill)
-    local sourceActor = source.mobile
-    local targetActor = target.mobile
+function this.perform(damage, source, sourceActor, targetActor, weaponSkill)
     local damageDone
 
     local rushChanceRoll = math.random(100)
@@ -55,11 +53,6 @@ function this.perform(source, damage, target, weaponSkill)
         end
     elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
         damageDone = bonusDamageForFatigue(targetActor, sourceActor, damage, common.config.weaponTier1.bonusDamageForFatigueMultiplier)
-    end
-
-    if damageDone ~= nil then
-        -- Apply the extra damage to the actor if we have it
-        targetActor:applyHealthDamage(damageDone, false, true, false)
     end
 
     return damageDone

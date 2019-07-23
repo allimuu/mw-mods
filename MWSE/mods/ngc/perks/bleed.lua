@@ -16,8 +16,7 @@ end
 
 --[[ Perform bleed (axe)
 --]]
-function this.perform(damage, target, weaponSkill)
-    local targetActor = target.mobile
+function this.perform(damage, target, targetActor, weaponSkill)
     local damageDone
     local maxStacks = 1
 

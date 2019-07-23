@@ -58,22 +58,22 @@ local function damageMessage(damageType, damageDone)
 end
 
 -- core damage features
-local function coreBonusDamage(damage, targetActor, weaponoSkillLevel, attackBonus)
+local function attackBonusMod(attackBonus)
+    return (((attackBonus - 100) * common.config.attackBonusModifier) / 100)
+end
+
+local function coreBonusDamage(damage, weaponoSkillLevel, attackBonus)
     local damageMod
 
     -- modify damage for weapon skill bonus
     local weaponSkillMod = ((weaponoSkillLevel * common.config.weaponSkillModifier) / 100)
 
     -- modify damage for Fortify Attack bonus
-    local fortifyAttackMod = (((attackBonus - 100) * common.config.attackBonusModifier) / 100)
+    local fortifyAttackMod = attackBonusMod(attackBonus)
 
     damageMod = damage * (weaponSkillMod + fortifyAttackMod)
 
-    if common.config.showDebugMessages then
-        tes3.messageBox({ message = "Bonus normal hit damage: " .. damageMod })
-    end
-
-    targetActor:applyHealthDamage(damageMod, false, true, false)
+    return damageMod
 end
 
 -- vanilla game strength modifier
@@ -81,157 +81,161 @@ local function strengthModifier(physicalDamage, strength)
     return physicalDamage * (0.5 + (strength / 100))
 end
 
--- perform weapon perks
-local function onAttack(e)
-	--
-	local source = e.reference
-    local sourceActor = source.mobile
-    local target = e.targetReference
-	local action = e.mobile.actionData
-    local weapon = e.mobile.readiedWeapon
-
-    -- core damage values
-    local sourceAttackBonus = sourceActor.attackBonus
-
-    if (source and target and e.mobile.actorType == 0) then
-        local targetActor = target.mobile
-        -- standard creature bonus
-        local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
-        local damageDone = damageMod * ((sourceActor.strength.current * common.config.creatureBonusModifier) / 100)
-        if common.config.showDebugMessages then
-            tes3.messageBox({ message = "Bonus creature hit damage: " .. damageDone })
-        end
-        targetActor:applyHealthDamage(damageDone, false, true, false)
-        return
-    end
-
-    -- handle player/NPC attacks
-    if source and weapon and target then
-        local targetActor = target.mobile
-
-        if action.physicalDamage == 0 then
-			-- ignore misses
-        elseif weapon.object.type > 8 then
-            -- ranged hit
-            local weaponSkill = sourceActor.marksman.current
-            -- get damage after strength mod
-            local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
-            -- core bonus damage for ranged hits
-            coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-        elseif action.physicalDamage > 0 then
-            -- we have a hit with damage
-            local damageDone
-            -- get damage after strength mod
-            local damageMod = strengthModifier(action.physicalDamage, sourceActor.strength.current)
-
-            if weapon.object.type > 6 then
-                -- axe
-                local weaponSkill = sourceActor.axe.current
-                coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-
-                if common.config.toggleWeaponPerks then
-                    damageDone = bleed.perform(damageMod, target, weaponSkill)
-                    if (damageDone ~= nil and source == tes3.player) then
-                        damageMessage("Bleeding!", damageDone)
-                    end
-                end
-            elseif weapon.object.type > 5 then
-                -- spear
-                local weaponSkill = sourceActor.spear.current
-                coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-
-                if common.config.toggleWeaponPerks then
-                    damageDone = momentum.perform(source, damageMod, target, weaponSkill)
-                    if (damageDone ~= nil and source == tes3.player and common.config.showDamageNumbers) then
-                        damageMessage("Momentum!", damageDone)
-                    end
-                end
-            elseif weapon.object.type > 2 then
-                -- blunt
-                local weaponSkill = sourceActor.bluntWeapon.current
-                local stunned
-                coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-
-                if common.config.toggleWeaponPerks then
-                    stunned, damageDone = stun.perform(damageMod, target, weaponSkill)
-                    if (stunned and source == tes3.player) then
-                        damageMessage("Stunned!", damageDone)
-                    elseif (source == tes3.player and common.config.showDamageNumbers) then
-                        -- just show extra damage for blunt weapon if no stun
-                        damageMessage("", damageDone)
-                    end
-                end
-            elseif weapon.object.type > 0 then
-                -- long blade
-                local weaponSkill = sourceActor.longBlade.current
-                coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-
-                if common.config.toggleWeaponPerks then
-                    common.multistrikeCounters = multistrike.checkCounters(source.id)
-                    if common.multistrikeCounters[source.id] == 3 then
-                        damageDone = multistrike.perform(source, damageMod, target, weaponSkill)
-                        common.multistrikeCounters[source.id] = 0
-                        if source == tes3.player then
-                            damageMessage("Multistrike!", damageDone)
-                        end
-                    end
-                end
-            elseif weapon.object.type > -1 then
-                -- short blade
-                local weaponSkill = sourceActor.shortBlade.current
-                coreBonusDamage(damageMod, targetActor, weaponSkill, sourceAttackBonus)
-
-                if common.config.toggleWeaponPerks then
-                    damageDone = critical.perform(damageMod, target, weaponSkill)
-                    if (damageDone ~= nil and source == tes3.player) then
-                        damageMessage("Critical strike!", damageDone)
-                    end
-                end
-            end
-        end
-    end
-end
-
 local function onDamage(e)
     local attacker = e.attacker
     local defender = e.mobile
+
+    local source = e.attackerReference
+    local target = e.reference
+    local sourceActor = attacker
+    local targetActor = defender
+
+    local damageTaken = e.damage
+    local damageAdded
     local damageReduced
 
-    if attacker and e.source == 'attack' then
-        -- roll for blind first
-        if attacker.blind > 0 then
-            local missChanceRoll = math.random(100)
-            if attacker.blind >= missChanceRoll then
-                -- you blind, you miss
-                if (common.config.showMessages and e.attackerReference == tes3.player) then
-                    tes3.messageBox({ message = "Missed!" })
+    if e.source == 'attack' then
+        if attacker then
+            -- roll for blind first
+            if attacker.blind > 0 then
+                local missChanceRoll = math.random(100)
+                if attacker.blind >= missChanceRoll then
+                    -- you blind, you miss
+                    if (common.config.showMessages and source == tes3.player) then
+                        tes3.messageBox({ message = "Missed!" })
+                    end
+                    -- no damage
+                    return
                 end
-                -- no damage
-                return
             end
         end
-    end
 
-    if defender and e.source == 'attack' then
-        -- reduction from sanctuary
-        local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
-        local reductionFromSanctuary
-        if (scantuaryMod >= 0.1) then
-            reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100
-        else
-            reductionFromSanctuary = (defender.sanctuary * 0.1) / 100 -- minimum sanctuary reduction
+        if defender then
+            -- reduction from sanctuary
+            local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
+            local reductionFromSanctuary
+            if (scantuaryMod >= 0.1) then
+                reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100
+            else
+                reductionFromSanctuary = (defender.sanctuary * 0.1) / 100 -- minimum sanctuary reduction
+            end
+
+            if reductionFromSanctuary then
+                damageReduced = damageTaken * reductionFromSanctuary
+                damageTaken = damageTaken - damageReduced
+            end
         end
 
-        if reductionFromSanctuary then
-            damageReduced = e.damage * reductionFromSanctuary
-        end
-    end
+        if attacker then
+            -- core damage values
+            local weapon = e.attacker.readiedWeapon
+            local sourceAttackBonus = sourceActor.attackBonus
 
-    -- if we have damage reduction
-    if damageReduced and e.source == 'attack' then
-        e.damage = e.damage - damageReduced
-        if common.config.showDebugMessages then
-            tes3.messageBox({ message = "Damage reduced: " .. damageReduced })
+            if attacker.actorType == 0 then
+                -- standard creature bonus
+                local fortifyAttackMod = attackBonusMod(sourceAttackBonus)
+                local creatureStrengthMod = ((sourceActor.strength.current * common.config.creatureBonusModifier) / 100)
+                damageAdded = damageTaken * (fortifyAttackMod + creatureStrengthMod)
+            elseif weapon then
+                -- handle player/NPC attacks
+
+                if weapon.object.type > 8 then
+                    -- ranged hit
+                    local weaponSkill = sourceActor.marksman.current
+                    -- core bonus damage for ranged hits
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+                elseif weapon.object.type > 6 then
+                    -- axe
+                    local weaponSkill = sourceActor.axe.current
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if common.config.toggleWeaponPerks then
+                        local damageDone = bleed.perform(damageTaken, target, targetActor, weaponSkill)
+                        if (damageDone ~= nil and source == tes3.player) then
+                            damageMessage("Bleeding!", damageDone)
+                        end
+                    end
+                elseif weapon.object.type > 5 then
+                    -- spear
+                    local weaponSkill = sourceActor.spear.current
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if common.config.toggleWeaponPerks then
+                        local damageDone = momentum.perform(damageTaken, source, sourceActor, targetActor, weaponSkill)
+                        if damageDone ~= nil then
+                            if (source == tes3.player and common.config.showDamageNumbers) then
+                                damageMessage("Momentum!", damageDone)
+                            end
+                            damageAdded = damageAdded + damageDone
+                        end
+                    end
+                elseif weapon.object.type > 2 then
+                    -- blunt
+                    local weaponSkill = sourceActor.bluntWeapon.current
+                    local stunned
+                    local damageDone
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if common.config.toggleWeaponPerks then
+                        stunned, damageDone = stun.perform(damageTaken, target, targetActor, weaponSkill)
+                        if (stunned and source == tes3.player) then
+                            damageMessage("Stunned!", damageDone)
+                        elseif (source == tes3.player and common.config.showDamageNumbers) then
+                            -- just show extra damage for blunt weapon if no stun
+                            damageMessage("", damageDone)
+                        end
+                        damageAdded = damageAdded + damageDone
+                    end
+                elseif weapon.object.type > 0 then
+                    -- long blade
+                    local weaponSkill = sourceActor.longBlade.current
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if common.config.toggleWeaponPerks then
+                        common.multistrikeCounters = multistrike.checkCounters(source.id)
+                        if common.multistrikeCounters[source.id] == 3 then
+                            local damageDone = multistrike.perform(damageTaken, source, weaponSkill)
+                            common.multistrikeCounters[source.id] = 0
+                            if source == tes3.player then
+                                damageMessage("Multistrike!", damageDone)
+                            end
+                            damageAdded = damageAdded + damageDone
+                        end
+                    end
+                elseif weapon.object.type > -1 then
+                    -- short blade
+                    local weaponSkill = sourceActor.shortBlade.current
+                    damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if common.config.toggleWeaponPerks then
+                        local damageDone = critical.perform(damageTaken, target, weaponSkill)
+                        if damageDone ~= nil then
+                            if source == tes3.player then
+                                damageMessage("Critical strike!", damageDone)
+                            end
+                            damageAdded = damageAdded + damageDone
+                        end
+                    end
+                end
+            end
+        end
+
+        if damageAdded then
+            -- we already have damageReduced taken into account with damageTaken
+            e.damage = damageTaken + damageAdded
+            if common.config.showDebugMessages then
+                local showReducedDamage = 0
+                if damageReduced then
+                    showReducedDamage = damageReduced
+                end
+                tes3.messageBox({ message = "Final damage: " .. math.round(e.damage, 2) .. ". Reduced: " .. math.round(showReducedDamage, 2) .. ". Added: " .. math.round(damageAdded, 2)  })
+            end
+        elseif damageReduced then
+            -- we don't have any damage added but we still have damage reduced
+            e.damage = e.damage - damageReduced
+            if common.config.showDebugMessages then
+                tes3.messageBox({ message = "Reduced: " .. math.round(damageReduced, 2) })
+            end
         end
     end
 end
@@ -252,7 +256,6 @@ local function initialized(e)
         event.register("cellChanged", updatePlayer)
         event.register("mobileActivated", onActorActivated)
         event.register("combatStopped", onCombatEnd)
-        event.register("attack", onAttack)
         event.register("damage", onDamage)
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)

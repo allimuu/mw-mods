@@ -45,8 +45,7 @@ end
 
 --[[ Perform a stun and bonus armor damage (blunt weapon)
 --]]
-function this.perform(damage, target, weaponSkill)
-    local targetActor = target.mobile
+function this.perform(damage, target, targetActor, weaponSkill)
     local damageDone
     local stunned = false
 
@@ -74,11 +73,6 @@ function this.perform(damage, target, weaponSkill)
             castStun(targetActor)
             stunned = true
         end
-    end
-
-    if damageDone ~= nil then
-    -- Apply the extra damage to the actor if we have it
-        targetActor:applyHealthDamage(damageDone, false, true, false)
     end
 
     return stunned, damageDone
