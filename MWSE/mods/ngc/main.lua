@@ -9,23 +9,33 @@ local bleed
 local stun
 local momentum
 local attackBonusSpell = "ngc_ready_to_strike"
+local fatigueReference = {}
 
--- set up the always hit spell for player
-local function updatePlayer(e)
-    if not mwscript.getSpellEffects({reference = tes3.player, spell = attackBonusSpell}) then
-        mwscript.addSpell({reference = tes3.player, spell = attackBonusSpell})
+-- this function is just here to clean up the old ability from legacy saves
+local function updatePlayer()
+    if mwscript.getSpellEffects({reference = tes3.player, spell = attackBonusSpell}) then
+        mwscript.removeSpell({reference = tes3.player, spell = attackBonusSpell})
     end
 end
 
--- set up the always hit spell for NPCs
+-- this function is just here to clean up the old ability from legacy saves
 local function onActorActivated(e)
     local hasSpell = mwscript.getSpellEffects({reference = e.reference, spell = attackBonusSpell})
-    if not hasSpell then
-        mwscript.addSpell({reference = e.reference, spell = attackBonusSpell})
-        if common.showDebugMessages then
-            tes3.messageBox({ message = "Adding ready to strike to " .. e.reference.id })
-        end
+    if hasSpell then
+        mwscript.removeSpell({reference = e.reference, spell = attackBonusSpell})
     end
+end
+
+-- setup hit chance
+local function alwaysHit(e)
+    if common.config.toggleAlwaysHit then
+        e.hitChance = 100
+    end
+end
+
+-- on game load
+local function onLoaded(e)
+    updatePlayer()
 end
 
 -- clean up after combat
@@ -44,6 +54,8 @@ local function onCombatEnd(e)
             common.currentlyBleeding[targetId].timer:cancel()
         end
         common.currentlyBleeding = {}
+        -- clean up fatigue trackng
+        fatigueReference = {}
     end
 end
 
@@ -59,17 +71,20 @@ end
 
 -- core damage features
 local function attackBonusMod(attackBonus)
-    return (((attackBonus - 100) * common.config.attackBonusModifier) / 100)
+    return ((attackBonus * common.config.attackBonusModifier) / 100)
 end
 
 local function coreBonusDamage(damage, weaponoSkillLevel, attackBonus)
     local damageMod
+    local fortifyAttackMod = 0
 
     -- modify damage for weapon skill bonus
     local weaponSkillMod = ((weaponoSkillLevel * common.config.weaponSkillModifier) / 100)
 
     -- modify damage for Fortify Attack bonus
-    local fortifyAttackMod = attackBonusMod(attackBonus)
+    if common.config.toggleAlwaysHit then
+        fortifyAttackMod = attackBonusMod(attackBonus)
+    end
 
     damageMod = damage * (weaponSkillMod + fortifyAttackMod)
 
@@ -77,8 +92,28 @@ local function coreBonusDamage(damage, weaponoSkillLevel, attackBonus)
 end
 
 -- vanilla game strength modifier
-local function strengthModifier(physicalDamage, strength)
-    return physicalDamage * (0.5 + (strength / 100))
+local function strengthModifier(damage, strength)
+    return damage * (0.5 + (strength / 100))
+end
+
+-- custom knockdown
+local function playKnockdown(targetReference)
+    tes3.playAnimation({
+        reference = targetReference,
+        group = 0x22,
+        startFlag = 1,
+    })
+    timer.start({
+        duration = 3,
+        callback = function ()
+            tes3.playAnimation({
+                reference = targetReference,
+                group = 0x0,
+                startFlag = 0,
+            })
+        end,
+        iterations = 1
+    })
 end
 
 local function onDamage(e)
@@ -95,7 +130,7 @@ local function onDamage(e)
     local damageReduced
 
     if e.source == 'attack' then
-        if attacker then
+        if attacker and common.config.toggleAlwaysHit then
             -- roll for blind first
             if attacker.blind > 0 then
                 local missChanceRoll = math.random(100)
@@ -110,7 +145,7 @@ local function onDamage(e)
             end
         end
 
-        if defender then
+        if defender and common.config.toggleAlwaysHit then
             -- reduction from sanctuary
             local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
             local reductionFromSanctuary
@@ -133,11 +168,14 @@ local function onDamage(e)
 
             if attacker.actorType == 0 then
                 -- standard creature bonus
-                local fortifyAttackMod = attackBonusMod(sourceAttackBonus)
+                local fortifyAttackMod = 0
+                if common.config.toggleAlwaysHit then
+                    fortifyAttackMod = attackBonusMod(sourceAttackBonus)
+                end
                 local creatureStrengthMod = ((sourceActor.strength.current * common.config.creatureBonusModifier) / 100)
                 damageAdded = damageTaken * (fortifyAttackMod + creatureStrengthMod)
             elseif weapon then
-                -- handle player/NPC attacks
+                -- handle player/NPC attacks with weapons
 
                 if weapon.object.type > 8 then
                     -- ranged hit
@@ -217,6 +255,10 @@ local function onDamage(e)
                         end
                     end
                 end
+            elseif weapon == nil then
+                -- hand to hand
+                local weaponSkill = sourceActor.handToHand.current
+                damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
             end
         end
 
@@ -240,6 +282,61 @@ local function onDamage(e)
     end
 end
 
+local function onAttack(e)
+    -- this is mainly for hand to hand
+    local sourceActor = e.mobile
+    local weapon = e.mobile.readiedWeapon
+    local targetActor = e.targetMobile
+    if weapon == nil and targetActor then
+        -- this must be a hand to hand attack
+        local fatigue = targetActor.fatigue.current
+        fatigueReference[e.targetReference.id] = fatigue
+
+        local bonusDamage
+        local weaponSkill = sourceActor.handToHand.current
+        if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
+            bonusDamage = math.random(common.config.weaponTier4.handToHandBaseDamageMin, common.config.weaponTier4.handToHandBaseDamageMax)
+        elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
+            bonusDamage = math.random(common.config.weaponTier3.handToHandBaseDamageMin, common.config.weaponTier3.handToHandBaseDamageMax)
+        elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
+            bonusDamage = math.random(common.config.weaponTier2.handToHandBaseDamageMin, common.config.weaponTier2.handToHandBaseDamageMax)
+        elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
+            bonusDamage = math.random(common.config.weaponTier1.handToHandBaseDamageMin, common.config.weaponTier1.handToHandBaseDamageMax)
+        else
+            bonusDamage = math.random(common.config.handToHandBaseDamageMin, common.config.handToHandBaseDamageMax)
+        end
+
+        if bonusDamage then
+            bonusDamage = bonusDamage + strengthModifier(bonusDamage, sourceActor.strength.current)
+            targetActor:applyHealthDamage(bonusDamage, false, true, false)
+        end
+    end
+end
+
+local function onDamaged(e)
+    -- this is mainly to handle fatigue restore for hand to hand
+    local attacker = e.attacker
+    local defender = e.mobile
+
+    if common.config.toggleAlwaysHit then
+        e.checkForKnockdown = false
+    end
+
+    if e.source == 'attack' then
+        -- restore fatigue if it's a hand to hand hit
+        if attacker and defender then
+            local weapon = attacker.readiedWeapon
+            if weapon == nil then
+                -- this is hand to hand
+                local defenderFatigue = fatigueReference[defender.reference.id]
+                if defenderFatigue then
+                    tes3.setStatistic({ reference = defender.reference, name = "fatigue", value = defenderFatigue })
+                end
+            end
+        end
+    end
+end
+
 local function initialized(e)
 	if tes3.isModActive("Next Generation Combat.esp") then
         common.loadConfig()
@@ -252,11 +349,13 @@ local function initialized(e)
         momentum = require("ngc.perks.momentum")
 
         -- register events
-        event.register("loaded", updatePlayer)
-        event.register("cellChanged", updatePlayer)
-        event.register("mobileActivated", onActorActivated)
+        event.register("loaded", onLoaded)
+        event.register("calcHitChance", alwaysHit)
         event.register("combatStopped", onCombatEnd)
+        event.register("mobileActivated", onActorActivated)
         event.register("damage", onDamage)
+        event.register("attack", onAttack)
+        event.register("damaged", onDamaged)
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
         mwse.log(json.encode(common.config, {indent=true}))

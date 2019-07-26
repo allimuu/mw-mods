@@ -10,6 +10,7 @@ local defaultConfig = {
     showMessages = true,
     showDamageNumbers = false,
     showDebugMessages = false,
+    toggleAlwaysHit = true,
     toggleWeaponPerks = true,
     creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
@@ -19,6 +20,9 @@ local defaultConfig = {
     multistrikeBonuseDamageMultiplier = 1,
     criticalStrikeMultiplier = 1,
     bleedMultiplier = 0.3,
+    handToHandSkillMultiplier = 0.75,
+    handToHandBaseDamageMin = 2,
+    handToHandBaseDamageMax = 4,
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,
@@ -26,6 +30,8 @@ local defaultConfig = {
         bleedChance = 10,
         stunChance = 10,
         bonusDamageForFatigueMultiplier = 0.15,
+        handToHandBaseDamageMin = 3,
+        handToHandBaseDamageMax = 5,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -38,6 +44,8 @@ local defaultConfig = {
         bonusArmorDamageMultiplier = 0.2,
         bonusDamageForFatigueMultiplier = 0.3,
         adrenalineRushChance = 10,
+        handToHandBaseDamageMin = 6,
+        handToHandBaseDamageMax = 8,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -50,6 +58,8 @@ local defaultConfig = {
         bonusArmorDamageMultiplier = 0.25,
         bonusDamageForFatigueMultiplier = 0.45,
         adrenalineRushChance = 20,
+        handToHandBaseDamageMin = 9,
+        handToHandBaseDamageMax = 11,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -62,6 +72,8 @@ local defaultConfig = {
         bonusArmorDamageMultiplier = 0.33,
         bonusDamageForFatigueMultiplier = 0.6,
         adrenalineRushChance = 30,
+        handToHandBaseDamageMin = 12,
+        handToHandBaseDamageMax = 14,
     },
 }
 
