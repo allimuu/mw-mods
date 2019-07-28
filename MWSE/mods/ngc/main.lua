@@ -9,7 +9,9 @@ local bleed
 local stun
 local momentum
 local attackBonusSpell = "ngc_ready_to_strike"
-local fatigueReference = {}
+local handToHandReferences = {}
+local enemyHealthBar
+local fadeTimer
 
 -- this function is just here to clean up the old ability from legacy saves
 local function updatePlayer()
@@ -36,6 +38,17 @@ end
 -- on game load
 local function onLoaded(e)
     updatePlayer()
+
+    -- get enemy health bar widget for hand to hand
+    local menu_multi = tes3ui.registerID("MenuMulti")
+    local health_bar = tes3ui.registerID("MenuMulti_npc_health_bar")
+    enemyHealthBar = tes3ui.findMenu(menu_multi):findChild(health_bar)
+
+    -- set GMSTs
+    local minHandToHand = tes3.findGMST("fMinHandToHandMult")
+    local maxHandToHand = tes3.findGMST("fMaxHandToHandMult")
+    minHandToHand.value = 0
+    maxHandToHand.value = 0
 end
 
 -- clean up after combat
@@ -54,8 +67,8 @@ local function onCombatEnd(e)
             common.currentlyBleeding[targetId].timer:cancel()
         end
         common.currentlyBleeding = {}
-        -- clean up fatigue trackng
-        fatigueReference = {}
+        -- clean up hand to hand tracking
+        handToHandReferences = {}
     end
 end
 
@@ -94,6 +107,24 @@ end
 -- vanilla game strength modifier
 local function strengthModifier(damage, strength)
     return damage * (0.5 + (strength / 100))
+end
+
+local function damageReductionFromSanctuary(defender, damageTaken)
+    local damageReduced
+    -- reduction from sanctuary
+    local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
+    local reductionFromSanctuary
+    if (scantuaryMod >= 0.1) then
+        reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100
+    else
+        reductionFromSanctuary = (defender.sanctuary * 0.1) / 100 -- minimum sanctuary reduction
+    end
+
+    if reductionFromSanctuary then
+        damageReduced = damageTaken * reductionFromSanctuary
+    end
+
+    return damageReduced
 end
 
 -- custom knockdown
@@ -147,17 +178,10 @@ local function onDamage(e)
 
         if defender and common.config.toggleAlwaysHit then
             -- reduction from sanctuary
-            local scantuaryMod = (((defender.agility.current + defender.luck.current) - 30) * common.config.sanctuaryModifier) / 100
-            local reductionFromSanctuary
-            if (scantuaryMod >= 0.1) then
-                reductionFromSanctuary = (defender.sanctuary * scantuaryMod) / 100
-            else
-                reductionFromSanctuary = (defender.sanctuary * 0.1) / 100 -- minimum sanctuary reduction
-            end
-
+            local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
             if reductionFromSanctuary then
-                damageReduced = damageTaken * reductionFromSanctuary
-                damageTaken = damageTaken - damageReduced
+                damageTaken = damageTaken - reductionFromSanctuary
+                damageReduced = reductionFromSanctuary
             end
         end
 
@@ -255,29 +279,58 @@ local function onDamage(e)
                         end
                     end
                 end
-            elseif weapon == nil then
-                -- hand to hand
-                local weaponSkill = sourceActor.handToHand.current
-                damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+            end
+        end
+    end
+
+    if e.source == nil and handToHandReferences[target.id] then
+        -- nil sources of damage come from bleed and hand to hand so are special cases
+        local handToHandAttacker = handToHandReferences[target.id]
+        -- reset the attacker refernece
+        handToHandReferences[target.id] = nil
+
+        if common.config.toggleAlwaysHit then
+            -- roll for blind first
+            if handToHandAttacker.blind > 0 then
+                local missChanceRoll = math.random(100)
+                if handToHandAttacker.blind >= missChanceRoll then
+                    -- you blind, you miss
+                    if (common.config.showMessages and source == tes3.player) then
+                        tes3.messageBox({ message = "Missed!" })
+                    end
+                    -- no damage
+                    return
+                end
             end
         end
 
-        if damageAdded then
-            -- we already have damageReduced taken into account with damageTaken
-            e.damage = damageTaken + damageAdded
-            if common.config.showDebugMessages then
-                local showReducedDamage = 0
-                if damageReduced then
-                    showReducedDamage = damageReduced
-                end
-                tes3.messageBox({ message = "Final damage: " .. math.round(e.damage, 2) .. ". Reduced: " .. math.round(showReducedDamage, 2) .. ". Added: " .. math.round(damageAdded, 2)  })
+        if defender and common.config.toggleAlwaysHit then
+            -- reduction from sanctuary
+            local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
+            if reductionFromSanctuary then
+                damageTaken = damageTaken - reductionFromSanctuary
+                damageReduced = reductionFromSanctuary
             end
-        elseif damageReduced then
-            -- we don't have any damage added but we still have damage reduced
-            e.damage = e.damage - damageReduced
-            if common.config.showDebugMessages then
-                tes3.messageBox({ message = "Reduced: " .. math.round(damageReduced, 2) })
+        end
+
+        damageAdded = coreBonusDamage(damageTaken, handToHandAttacker.weaponSkill, handToHandAttacker.attackBonus)
+    end
+
+    if damageAdded then
+        -- we already have damageReduced taken into account with damageTaken
+        e.damage = damageTaken + damageAdded
+        if common.config.showDebugMessages then
+            local showReducedDamage = 0
+            if damageReduced then
+                showReducedDamage = damageReduced
             end
+            tes3.messageBox({ message = "Final damage: " .. math.round(e.damage, 2) .. ". Reduced: " .. math.round(showReducedDamage, 2) .. ". Added: " .. math.round(damageAdded, 2)  })
+        end
+    elseif damageReduced then
+        -- we don't have any damage added but we still have damage reduced
+        e.damage = e.damage - damageReduced
+        if common.config.showDebugMessages then
+            tes3.messageBox({ message = "Reduced: " .. math.round(damageReduced, 2) })
         end
     end
 end
@@ -289,11 +342,16 @@ local function onAttack(e)
     local targetActor = e.targetMobile
     if weapon == nil and targetActor then
         -- this must be a hand to hand attack
-        local fatigue = targetActor.fatigue.current
-        fatigueReference[e.targetReference.id] = fatigue
-
         local bonusDamage
         local weaponSkill = sourceActor.handToHand.current
+
+        handToHandReferences[e.targetReference.id] = {
+            attackerReference = e.reference,
+            weaponSkill = weaponSkill,
+            attackBonus = sourceActor.attackBonus,
+            blind = sourceActor.blind
+        }
+
         if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
             bonusDamage = math.random(common.config.weaponTier4.handToHandBaseDamageMin, common.config.weaponTier4.handToHandBaseDamageMax)
         elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
@@ -309,31 +367,33 @@ local function onAttack(e)
         if bonusDamage then
             bonusDamage = bonusDamage + strengthModifier(bonusDamage, sourceActor.strength.current)
             targetActor:applyHealthDamage(bonusDamage, false, true, false)
+
+            if (e.reference == tes3.player) then
+                -- show enemy health bar
+                enemyHealthBar.visible = true
+                enemyHealthBar:setPropertyFloat("PartFillbar_current", targetActor.health.current)
+                enemyHealthBar:setPropertyFloat("PartFillbar_max", targetActor.health.base)
+
+                if fadeTimer == nil then
+                    fadeTimer = timer.start({
+                        duration = 2,
+                        callback = function ()
+                            enemyHealthBar.visible = false
+                        end,
+                        iterations = 1
+                    })
+                elseif fadeTimer.expired then
+                    fadeTimer:reset()
+                end
+            end
         end
     end
 end
 
 local function onDamaged(e)
-    -- this is mainly to handle fatigue restore for hand to hand
-    local attacker = e.attacker
-    local defender = e.mobile
-
+    -- disable knockdowns
     if common.config.toggleAlwaysHit then
         e.checkForKnockdown = false
-    end
-
-    if e.source == 'attack' then
-        -- restore fatigue if it's a hand to hand hit
-        if attacker and defender then
-            local weapon = attacker.readiedWeapon
-            if weapon == nil then
-                -- this is hand to hand
-                local defenderFatigue = fatigueReference[defender.reference.id]
-                if defenderFatigue then
-                    tes3.setStatistic({ reference = defender.reference, name = "fatigue", value = defenderFatigue })
-                end
-            end
-        end
     end
 end
 
@@ -353,12 +413,11 @@ local function initialized(e)
         event.register("calcHitChance", alwaysHit)
         event.register("combatStopped", onCombatEnd)
         event.register("mobileActivated", onActorActivated)
-        event.register("damage", onDamage)
         event.register("attack", onAttack)
+        event.register("damage", onDamage)
         event.register("damaged", onDamaged)
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
-        mwse.log(json.encode(common.config, {indent=true}))
 	end
 end
 event.register("initialized", initialized)

@@ -20,7 +20,6 @@ local defaultConfig = {
     multistrikeBonuseDamageMultiplier = 1,
     criticalStrikeMultiplier = 1,
     bleedMultiplier = 0.3,
-    handToHandSkillMultiplier = 0.75,
     handToHandBaseDamageMin = 2,
     handToHandBaseDamageMax = 4,
     weaponTier1 = {
