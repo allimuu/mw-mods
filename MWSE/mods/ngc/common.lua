@@ -22,6 +22,8 @@ local defaultConfig = {
     bleedMultiplier = 0.3,
     handToHandBaseDamageMin = 2,
     handToHandBaseDamageMax = 4,
+    disableDefaultKnockdowns = true,
+    agilityKnockdownChanceBaseModifier = 0.5,
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,
@@ -31,6 +33,7 @@ local defaultConfig = {
         bonusDamageForFatigueMultiplier = 0.15,
         handToHandBaseDamageMin = 3,
         handToHandBaseDamageMax = 5,
+        handToHandKnockdownChance = 5,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -45,6 +48,7 @@ local defaultConfig = {
         adrenalineRushChance = 10,
         handToHandBaseDamageMin = 6,
         handToHandBaseDamageMax = 8,
+        handToHandKnockdownChance = 10,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -59,6 +63,7 @@ local defaultConfig = {
         adrenalineRushChance = 20,
         handToHandBaseDamageMin = 9,
         handToHandBaseDamageMax = 11,
+        handToHandKnockdownChance = 15,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -73,6 +78,7 @@ local defaultConfig = {
         adrenalineRushChance = 30,
         handToHandBaseDamageMin = 12,
         handToHandBaseDamageMax = 14,
+        handToHandKnockdownChance = 20,
     },
 }
 
@@ -87,6 +93,19 @@ function this.loadConfig()
 
 	mwse.log("[Next Generation Combat] Loaded configuration:")
 	mwse.log(json.encode(this.config, { indent = true }))
+end
+
+-- common util functions
+function this.getARforTarget(target)
+    local totalAR = 0
+    for id, slot in pairs(tes3.armorSlot) do
+        local equippedSlot = tes3.getEquippedItem({ actor = target, objectType = tes3.objectType.armor, slot = slot })
+        if equippedSlot then
+            totalAR = totalAR + equippedSlot.object.armorRating
+        end
+    end
+
+    return totalAR
 end
 
 

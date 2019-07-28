@@ -2,26 +2,13 @@ local this = {}
 
 local common = require('ngc.common')
 
-
-local function getARforTarget(target)
-    local totalAR = 0
-    for id, slot in pairs(tes3.armorSlot) do
-        local equippedSlot = tes3.getEquippedItem({ actor = target, objectType = tes3.objectType.armor, slot = slot })
-        if equippedSlot then
-            totalAR = totalAR + equippedSlot.object.armorRating
-        end
-    end
-
-    return totalAR
-end
-
 local function bonusArmorDamage(target, damageDone, arMod)
     -- calculate the bonus armor damage
     local bonusDamage
     local totalAR = common.currentArmorCache[target.id]
     if totalAR == nil then
         -- no cache, calculate total armor
-        totalAR = getARforTarget(target)
+        totalAR = common.getARforTarget(target)
         -- prime cache
         common.currentArmorCache[target.id] = totalAR
     end

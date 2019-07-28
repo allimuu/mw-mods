@@ -128,7 +128,10 @@ local function damageReductionFromSanctuary(defender, damageTaken)
 end
 
 -- custom knockdown
-local function playKnockdown(targetReference)
+local function playKnockdown(targetReference, source)
+    if (common.config.showMessages and source == tes3.player) then
+        tes3.messageBox({ message = "Knockdown!" })
+    end
     tes3.playAnimation({
         reference = targetReference,
         group = 0x22,
@@ -337,53 +340,82 @@ end
 
 local function onAttack(e)
     -- this is mainly for hand to hand
+    local source = e.reference
     local sourceActor = e.mobile
-    local weapon = e.mobile.readiedWeapon
+    local target = e.targetReference
     local targetActor = e.targetMobile
+    local weapon = sourceActor.readiedWeapon
+
     if weapon == nil and targetActor then
         -- this must be a hand to hand attack
-        local bonusDamage
-        local weaponSkill = sourceActor.handToHand.current
+        if sourceActor.handToHand then
+            local bonusDamage
+            local weaponSkill = sourceActor.handToHand.current
 
-        handToHandReferences[e.targetReference.id] = {
-            attackerReference = e.reference,
-            weaponSkill = weaponSkill,
-            attackBonus = sourceActor.attackBonus,
-            blind = sourceActor.blind
-        }
+            handToHandReferences[target.id] = {
+                attackerReference = source,
+                weaponSkill = weaponSkill,
+                attackBonus = sourceActor.attackBonus,
+                blind = sourceActor.blind
+            }
 
-        if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
-            bonusDamage = math.random(common.config.weaponTier4.handToHandBaseDamageMin, common.config.weaponTier4.handToHandBaseDamageMax)
-        elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
-            bonusDamage = math.random(common.config.weaponTier3.handToHandBaseDamageMin, common.config.weaponTier3.handToHandBaseDamageMax)
-        elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
-            bonusDamage = math.random(common.config.weaponTier2.handToHandBaseDamageMin, common.config.weaponTier2.handToHandBaseDamageMax)
-        elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
-            bonusDamage = math.random(common.config.weaponTier1.handToHandBaseDamageMin, common.config.weaponTier1.handToHandBaseDamageMax)
-        else
-            bonusDamage = math.random(common.config.handToHandBaseDamageMin, common.config.handToHandBaseDamageMax)
-        end
+            local knockdownChance = math.random(100)
+            local agilityChanceMod = common.config.agilityKnockdownChanceBaseModifier
+            if targetActor.agility.current < 100 then
+                agilityChanceMod = common.config.agilityKnockdownChanceBaseModifier * ((100 - targetActor.agility.current) / 100)
+            end
+            if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
+                if (common.config.weaponTier4.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
+                    playKnockdown(target, source)
+                end
+                bonusDamage = math.random(common.config.weaponTier4.handToHandBaseDamageMin, common.config.weaponTier4.handToHandBaseDamageMax)
+            elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
+                if (common.config.weaponTier3.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
+                    playKnockdown(target, source)
+                end
+                bonusDamage = math.random(common.config.weaponTier3.handToHandBaseDamageMin, common.config.weaponTier3.handToHandBaseDamageMax)
+            elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
+                if (common.config.weaponTier2.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
+                    playKnockdown(target, source)
+                end
+                bonusDamage = math.random(common.config.weaponTier2.handToHandBaseDamageMin, common.config.weaponTier2.handToHandBaseDamageMax)
+            elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
+                if (common.config.weaponTier1.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
+                    playKnockdown(target, source)
+                end
+                bonusDamage = math.random(common.config.weaponTier1.handToHandBaseDamageMin, common.config.weaponTier1.handToHandBaseDamageMax)
+            else
+                bonusDamage = math.random(common.config.handToHandBaseDamageMin, common.config.handToHandBaseDamageMax)
+            end
 
-        if bonusDamage then
-            bonusDamage = bonusDamage + strengthModifier(bonusDamage, sourceActor.strength.current)
-            targetActor:applyHealthDamage(bonusDamage, false, true, false)
+            if bonusDamage then
+                bonusDamage = bonusDamage + strengthModifier(bonusDamage, sourceActor.strength.current)
+                local armorGMST = tes3.findGMST("fCombatArmorMinMult")
+                local totalAR = common.getARforTarget(target)
+                local damageMod = bonusDamage / (bonusDamage + totalAR)
+                if damageMod <= armorGMST.value then
+                    damageMod = armorGMST.value
+                end
+                bonusDamage = bonusDamage * damageMod
+                targetActor:applyHealthDamage(bonusDamage, false, true, false)
 
-            if (e.reference == tes3.player) then
-                -- show enemy health bar
-                enemyHealthBar.visible = true
-                enemyHealthBar:setPropertyFloat("PartFillbar_current", targetActor.health.current)
-                enemyHealthBar:setPropertyFloat("PartFillbar_max", targetActor.health.base)
+                if source == tes3.player then
+                    -- show enemy health bar
+                    enemyHealthBar.visible = true
+                    enemyHealthBar:setPropertyFloat("PartFillbar_current", targetActor.health.current)
+                    enemyHealthBar:setPropertyFloat("PartFillbar_max", targetActor.health.base)
 
-                if fadeTimer == nil then
-                    fadeTimer = timer.start({
-                        duration = 2,
-                        callback = function ()
-                            enemyHealthBar.visible = false
-                        end,
-                        iterations = 1
-                    })
-                elseif fadeTimer.expired then
-                    fadeTimer:reset()
+                    if fadeTimer == nil or fadeTimer.state == timer.expired  then
+                        fadeTimer = timer.start({
+                            duration = 3,
+                            callback = function ()
+                                enemyHealthBar.visible = false
+                            end,
+                            iterations = 1
+                        })
+                    elseif fadeTimer.state == timer.active then
+                        fadeTimer:reset()
+                    end
                 end
             end
         end
@@ -392,7 +424,7 @@ end
 
 local function onDamaged(e)
     -- disable knockdowns
-    if common.config.toggleAlwaysHit then
+    if (common.config.toggleAlwaysHit and common.config.disableDefaultKnockdowns) then
         e.checkForKnockdown = false
     end
 end
