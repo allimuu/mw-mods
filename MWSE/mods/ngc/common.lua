@@ -23,7 +23,10 @@ local defaultConfig = {
     handToHandBaseDamageMin = 2,
     handToHandBaseDamageMax = 4,
     disableDefaultKnockdowns = true,
-    agilityKnockdownChanceBaseModifier = 0.5,
+    agilityKnockdownChanceMinMod = 0.25,
+    knockdownMultGMST = 0.8,
+    knockdownOddsMultGMST = 70,
+    fatigueAttackMultGMST = 0.2,
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,
@@ -33,7 +36,8 @@ local defaultConfig = {
         bonusDamageForFatigueMultiplier = 0.15,
         handToHandBaseDamageMin = 3,
         handToHandBaseDamageMax = 5,
-        handToHandKnockdownChance = 5,
+        handToHandKnockdownChance = 10,
+        handToHandKnockdownDamageMultiplier = 0.1,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -48,7 +52,8 @@ local defaultConfig = {
         adrenalineRushChance = 10,
         handToHandBaseDamageMin = 6,
         handToHandBaseDamageMax = 8,
-        handToHandKnockdownChance = 10,
+        handToHandKnockdownChance = 20,
+        handToHandKnockdownDamageMultiplier = 0.2,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -63,7 +68,8 @@ local defaultConfig = {
         adrenalineRushChance = 20,
         handToHandBaseDamageMin = 9,
         handToHandBaseDamageMax = 11,
-        handToHandKnockdownChance = 15,
+        handToHandKnockdownChance = 25,
+        handToHandKnockdownDamageMultiplier = 0.35,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -78,7 +84,8 @@ local defaultConfig = {
         adrenalineRushChance = 30,
         handToHandBaseDamageMin = 12,
         handToHandBaseDamageMax = 14,
-        handToHandKnockdownChance = 20,
+        handToHandKnockdownChance = 30,
+        handToHandKnockdownDamageMultiplier = 0.5,
     },
 }
 

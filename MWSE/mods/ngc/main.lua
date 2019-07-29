@@ -10,8 +10,11 @@ local stun
 local momentum
 local attackBonusSpell = "ngc_ready_to_strike"
 local handToHandReferences = {}
+local currentlyKnockedDown = {}
+local knockdownPlayer = false
 local enemyHealthBar
 local fadeTimer
+local playerKnockdownTimer
 
 -- this function is just here to clean up the old ability from legacy saves
 local function updatePlayer()
@@ -45,10 +48,21 @@ local function onLoaded(e)
     enemyHealthBar = tes3ui.findMenu(menu_multi):findChild(health_bar)
 
     -- set GMSTs
+    -- vanilla hand to hand disabled
     local minHandToHand = tes3.findGMST("fMinHandToHandMult")
     local maxHandToHand = tes3.findGMST("fMaxHandToHandMult")
     minHandToHand.value = 0
     maxHandToHand.value = 0
+
+    -- tweak knockdown values
+    local knockdownMult = tes3.findGMST("fKnockDownMult")
+    local knockdownOddsMult = tes3.findGMST("iKnockDownOddsMult")
+    knockdownMult.value = common.config.knockdownMultGMST
+    knockdownOddsMult.value = common.config.knockdownOddsMultGMST
+
+    -- tweak fatigue combat values
+    local fatigueAttackMult = tes3.findGMST("fFatigueAttackMult")
+    fatigueAttackMult.value = common.config.fatigueAttackMultGMST
 end
 
 -- clean up after combat
@@ -69,6 +83,9 @@ local function onCombatEnd(e)
         common.currentlyBleeding = {}
         -- clean up hand to hand tracking
         handToHandReferences = {}
+        -- clean up knockdown tracking
+        currentlyKnockedDown = {}
+        knockdownPlayer = false
     end
 end
 
@@ -82,11 +99,13 @@ local function damageMessage(damageType, damageDone)
     end
 end
 
--- core damage features
+-- Core damage features
+-- Attack bonus modifier for damage
 local function attackBonusMod(attackBonus)
     return ((attackBonus * common.config.attackBonusModifier) / 100)
 end
 
+-- Bonus damage for weapon skill and attack bonus (if always hit)
 local function coreBonusDamage(damage, weaponoSkillLevel, attackBonus)
     local damageMod
     local fortifyAttackMod = 0
@@ -109,6 +128,7 @@ local function strengthModifier(damage, strength)
     return damage * (0.5 + (strength / 100))
 end
 
+-- Calculate the reduction from the defenders sanctuary bonus
 local function damageReductionFromSanctuary(defender, damageTaken)
     local damageReduced
     -- reduction from sanctuary
@@ -127,11 +147,12 @@ local function damageReductionFromSanctuary(defender, damageTaken)
     return damageReduced
 end
 
--- custom knockdown
+-- custom knockdown event
 local function playKnockdown(targetReference, source)
     if (common.config.showMessages and source == tes3.player) then
         tes3.messageBox({ message = "Knockdown!" })
     end
+    currentlyKnockedDown[targetReference.id] = true
     tes3.playAnimation({
         reference = targetReference,
         group = 0x22,
@@ -140,6 +161,7 @@ local function playKnockdown(targetReference, source)
     timer.start({
         duration = 3,
         callback = function ()
+            currentlyKnockedDown[targetReference.id] = nil
             tes3.playAnimation({
                 reference = targetReference,
                 group = 0x0,
@@ -148,6 +170,20 @@ local function playKnockdown(targetReference, source)
         end,
         iterations = 1
     })
+end
+
+-- Calculate the knockdown chance modifier scaling with agility
+local function agilityKnockdownChance(targetActor)
+    local agilityChanceMod = 1
+    -- full knockdown chance unless Agility is higher than 30
+    if (targetActor.agility.current >= 30 and targetActor.agility.current < 100) then
+        agilityChanceMod = ((100 - targetActor.agility.current) / 100)
+    end
+    if agilityChanceMod < common.config.agilityKnockdownChanceMinMod then
+        agilityChanceMod = common.config.agilityKnockdownChanceMinMod
+    end
+
+    return agilityChanceMod
 end
 
 local function onDamage(e)
@@ -346,7 +382,8 @@ local function onAttack(e)
     local targetActor = e.targetMobile
     local weapon = sourceActor.readiedWeapon
 
-    if weapon == nil and targetActor then
+    -- on hand to hand attacks that are not from werewolves
+    if (weapon == nil and targetActor and sourceActor.werewolf == false) then
         -- this must be a hand to hand attack
         if sourceActor.handToHand then
             local bonusDamage
@@ -359,37 +396,71 @@ local function onAttack(e)
                 blind = sourceActor.blind
             }
 
+            local bonusKnockdownMod
             local knockdownChance = math.random(100)
-            local agilityChanceMod = common.config.agilityKnockdownChanceBaseModifier
-            if targetActor.agility.current < 100 then
-                agilityChanceMod = common.config.agilityKnockdownChanceBaseModifier * ((100 - targetActor.agility.current) / 100)
-            end
+            local agilityChanceMod = agilityKnockdownChance(targetActor)
             if weaponSkill >= common.config.weaponTier4.weaponSkillMin then
                 if (common.config.weaponTier4.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
-                    playKnockdown(target, source)
+                    if target == tes3.player then
+                        knockdownPlayer = true
+                    else
+                        playKnockdown(target, source)
+                    end
                 end
                 bonusDamage = math.random(common.config.weaponTier4.handToHandBaseDamageMin, common.config.weaponTier4.handToHandBaseDamageMax)
+                if currentlyKnockedDown[target.id] or knockdownPlayer then
+                    bonusKnockdownMod = common.config.weaponTier4.handToHandKnockdownDamageMultiplier
+                end
             elseif weaponSkill >= common.config.weaponTier3.weaponSkillMin then
                 if (common.config.weaponTier3.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
-                    playKnockdown(target, source)
+                    if target == tes3.player then
+                        knockdownPlayer = true
+                    else
+                        playKnockdown(target, source)
+                    end
                 end
                 bonusDamage = math.random(common.config.weaponTier3.handToHandBaseDamageMin, common.config.weaponTier3.handToHandBaseDamageMax)
+                if currentlyKnockedDown[target.id] or knockdownPlayer then
+                    bonusKnockdownMod = common.config.weaponTier3.handToHandKnockdownDamageMultiplier
+                end
             elseif weaponSkill >= common.config.weaponTier2.weaponSkillMin then
                 if (common.config.weaponTier2.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
-                    playKnockdown(target, source)
+                    if target == tes3.player then
+                        knockdownPlayer = true
+                    else
+                        playKnockdown(target, source)
+                    end
                 end
                 bonusDamage = math.random(common.config.weaponTier2.handToHandBaseDamageMin, common.config.weaponTier2.handToHandBaseDamageMax)
+                if currentlyKnockedDown[target.id] or knockdownPlayer then
+                    bonusKnockdownMod = common.config.weaponTier2.handToHandKnockdownDamageMultiplier
+                end
             elseif weaponSkill >= common.config.weaponTier1.weaponSkillMin then
                 if (common.config.weaponTier1.handToHandKnockdownChance * agilityChanceMod) >= knockdownChance then
-                    playKnockdown(target, source)
+                    if target == tes3.player then
+                        knockdownPlayer = true
+                    else
+                        playKnockdown(target, source)
+                    end
                 end
                 bonusDamage = math.random(common.config.weaponTier1.handToHandBaseDamageMin, common.config.weaponTier1.handToHandBaseDamageMax)
+                if currentlyKnockedDown[target.id] or knockdownPlayer then
+                    bonusKnockdownMod = common.config.weaponTier1.handToHandKnockdownDamageMultiplier
+                end
             else
                 bonusDamage = math.random(common.config.handToHandBaseDamageMin, common.config.handToHandBaseDamageMax)
             end
 
             if bonusDamage then
                 bonusDamage = bonusDamage + strengthModifier(bonusDamage, sourceActor.strength.current)
+                if bonusKnockdownMod then
+                    local bonusKnockdownDamage = (bonusDamage * bonusKnockdownMod)
+                    bonusDamage = bonusDamage + bonusKnockdownDamage
+                    if (source == tes3.player and common.config.showDamageNumbers) then
+                        -- just show extra damage for knockdown
+                        damageMessage("", bonusDamage)
+                    end
+                end
                 local armorGMST = tes3.findGMST("fCombatArmorMinMult")
                 local totalAR = common.getARforTarget(target)
                 local damageMod = bonusDamage / (bonusDamage + totalAR)
@@ -397,6 +468,24 @@ local function onAttack(e)
                     damageMod = armorGMST.value
                 end
                 bonusDamage = bonusDamage * damageMod
+                if knockdownPlayer then
+                    -- we want to knckdown the player
+                    if common.config.showDebugMessages then
+                        tes3.messageBox({ message = "Knocking down player!" })
+                    end
+                    local currentFatigue = tes3.mobilePlayer.fatigue.current
+                    tes3.setStatistic({ reference = tes3.player, name = "fatigue", current = -100 })
+                    if playerKnockdownTimer == nil or playerKnockdownTimer.state == timer.expired  then
+                        playerKnockdownTimer = timer.start({
+                            duration = 2,
+                            callback = function ()
+                                knockdownPlayer = false
+                                tes3.setStatistic({ reference = tes3.player, name = "fatigue", current = currentFatigue })
+                            end,
+                            iterations = 1
+                        })
+                    end
+                end
                 targetActor:applyHealthDamage(bonusDamage, false, true, false)
 
                 if source == tes3.player then
@@ -422,10 +511,11 @@ local function onAttack(e)
     end
 end
 
-local function onDamaged(e)
-    -- disable knockdowns
-    if (common.config.toggleAlwaysHit and common.config.disableDefaultKnockdowns) then
-        e.checkForKnockdown = false
+local function pressedBlockKey(e)
+    local readiedShield = tes3.mobilePlayer.readiedShield
+
+    if readiedShield then
+        -- do stuff here for block
     end
 end
 
@@ -447,7 +537,7 @@ local function initialized(e)
         event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
-        event.register("damaged", onDamaged)
+        event.register("keyDown", pressedBlockKey, { filter = 44 } )
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
 	end
