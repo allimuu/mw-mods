@@ -12,6 +12,7 @@ local defaultConfig = {
     showDebugMessages = false,
     toggleAlwaysHit = true,
     toggleWeaponPerks = true,
+    toggleActiveBlocking = true,
     creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,

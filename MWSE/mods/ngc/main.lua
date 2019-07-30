@@ -8,6 +8,8 @@ local critical
 local bleed
 local stun
 local momentum
+local block
+-- locals
 local attackBonusSpell = "ngc_ready_to_strike"
 local handToHandReferences = {}
 local currentlyKnockedDown = {}
@@ -31,10 +33,25 @@ local function onActorActivated(e)
     end
 end
 
--- setup hit chance
+-- setup hit chance and block chance
 local function alwaysHit(e)
     if common.config.toggleAlwaysHit then
         e.hitChance = 100
+    end
+
+    if common.config.toggleActiveBlocking then
+        if e.target == tes3.player then
+            if block.currentlyActiveBlocking then
+                tes3.messageBox({ message = "Setting max block!" })
+                block.setMaxBlock()
+            else
+                block.resetMaxBlock()
+            end
+        end
+
+        if e.target ~= tes3.player then
+            block.resetMaxBlock()
+        end
     end
 end
 
@@ -63,6 +80,12 @@ local function onLoaded(e)
     -- tweak fatigue combat values
     local fatigueAttackMult = tes3.findGMST("fFatigueAttackMult")
     fatigueAttackMult.value = common.config.fatigueAttackMultGMST
+
+    -- get block default GMSTs
+    local blockMaxGMST = tes3.findGMST("iBlockMaxChance")
+    local blockMinGMST = tes3.findGMST("iBlockMinChance")
+    block.maxBlockDefault = blockMaxGMST.value
+    block.minBlockDefault = blockMinGMST.value
 end
 
 -- clean up after combat
@@ -186,6 +209,8 @@ local function agilityKnockdownChance(targetActor)
     return agilityChanceMod
 end
 
+
+-- Damage events for weapon perks
 local function onDamage(e)
     local attacker = e.attacker
     local defender = e.mobile
@@ -511,14 +536,6 @@ local function onAttack(e)
     end
 end
 
-local function pressedBlockKey(e)
-    local readiedShield = tes3.mobilePlayer.readiedShield
-
-    if readiedShield then
-        -- do stuff here for block
-    end
-end
-
 local function initialized(e)
 	if tes3.isModActive("Next Generation Combat.esp") then
         common.loadConfig()
@@ -529,6 +546,7 @@ local function initialized(e)
         bleed = require("ngc.perks.bleed")
         stun = require("ngc.perks.stun")
         momentum = require("ngc.perks.momentum")
+        block = require("ngc.block")
 
         -- register events
         event.register("loaded", onLoaded)
@@ -537,7 +555,8 @@ local function initialized(e)
         event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
-        event.register("keyDown", pressedBlockKey, { filter = 44 } )
+        event.register("keyDown", block.keyPressed, { filter = 44 } )
+        event.register("keyUp", block.keyReleased, { filter = 44 } )
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
 	end
