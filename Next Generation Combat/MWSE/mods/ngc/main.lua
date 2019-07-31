@@ -544,6 +544,50 @@ local function onAttack(e)
     end
 end
 
+local function onExerciseSkill(e)
+    local weaponSkills = {
+        [4] = true, -- blunt
+        [5] = true, -- long blade
+        [6] = true, -- axe
+        [7] = true, -- spear
+        [22] = true, -- short blade
+        [26] = true, -- hand to hand
+    }
+    local armorSkills = {
+        [2] = true, -- medium armor
+        [3] = true, -- heavy armor
+        [17] = true, -- unarmored
+        [21] = true, -- light armor
+    }
+    local modifier
+
+    if weaponSkills[e.skill] then
+        -- this is a weapon skill
+        local weaponSkillLevel = tes3.mobilePlayer.skills[e.skill+1].base
+        modifier = common.config.weaponSkillGainBaseModifier
+        if weaponSkillLevel >= common.config.weaponTier4.weaponSkillMin then
+            modifier = common.config.weaponTier4.weaponSkillGainModifier
+        elseif weaponSkillLevel >= common.config.weaponTier3.weaponSkillMin then
+            modifier = common.config.weaponTier3.weaponSkillGainModifier
+        elseif weaponSkillLevel >= common.config.weaponTier2.weaponSkillMin then
+            modifier = common.config.weaponTier2.weaponSkillGainModifier
+        elseif weaponSkillLevel >= common.config.weaponTier1.weaponSkillMin then
+            modifier = common.config.weaponTier1.weaponSkillGainModifier
+        end
+    end
+
+    if armorSkills[e.skill] then
+        modifier = common.config.armorSkillGainBaseModifier
+    end
+
+    if modifier then
+        if common.config.showSkillGainDebugMessages then
+            tes3.messageBox({ message = "Base skill exp: " .. e.progress .. " Modified skill exp: " .. (e.progress * modifier)})
+        end
+        e.progress = e.progress * modifier
+    end
+end
+
 local function initialized(e)
 	if tes3.isModActive("Next Generation Combat.esp") then
         common.loadConfig()
@@ -563,6 +607,7 @@ local function initialized(e)
         event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
+        event.register("exerciseSkill", onExerciseSkill)
         if common.config.toggleActiveBlocking then
             event.register("keyDown", block.keyPressed, { filter = common.config.activeBlockKeyCode } )
             event.register("keyUp", block.keyReleased, { filter = common.config.activeBlockKeyCode } )

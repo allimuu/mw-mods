@@ -11,6 +11,7 @@ local defaultConfig = {
     showActiveBlockMessages = true,
     showDamageNumbers = false,
     showDebugMessages = false,
+    showSkillGainDebugMessages = false,
     toggleAlwaysHit = true,
     toggleWeaponPerks = true,
     toggleActiveBlocking = true,
@@ -32,6 +33,8 @@ local defaultConfig = {
     fatigueAttackMultGMST = 0.2,
     activeBlockingFatigueMin = 0.25,
     activeBlockingFatiguePercentBase = 0.25,
+    weaponSkillGainBaseModifier = 0.6,
+    armorSkillGainBaseModifier = 0.8,
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,
@@ -44,6 +47,7 @@ local defaultConfig = {
         handToHandKnockdownChance = 10,
         handToHandKnockdownDamageMultiplier = 0.1,
         activeBlockingFatiguePercent = 0.2,
+        weaponSkillGainModifier = 0.65,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -61,6 +65,7 @@ local defaultConfig = {
         handToHandKnockdownChance = 20,
         handToHandKnockdownDamageMultiplier = 0.2,
         activeBlockingFatiguePercent = 0.15,
+        weaponSkillGainModifier = 0.7,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -78,6 +83,7 @@ local defaultConfig = {
         handToHandKnockdownChance = 25,
         handToHandKnockdownDamageMultiplier = 0.35,
         activeBlockingFatiguePercent = 0.1,
+        weaponSkillGainModifier = 0.8,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -95,6 +101,7 @@ local defaultConfig = {
         handToHandKnockdownChance = 30,
         handToHandKnockdownDamageMultiplier = 0.5,
         activeBlockingFatiguePercent = 0.05,
+        weaponSkillGainModifier = 1,
     },
 }
 

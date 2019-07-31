@@ -1,8 +1,9 @@
 {
     "showMessages": true,
     "showActiveBlockMessages": true,
-    "showDamageNumbers": true,
-    "showDebugMessages": true,
+    "showDamageNumbers": false,
+    "showDebugMessages": false,
+    "showSkillGainDebugMessages": false,
     "toggleWeaponPerks": true,
     "toggleAlwaysHit": true,
     "toggleActiveBlocking": true,
@@ -25,6 +26,8 @@
     "activeBlockingFatiguePercent": 0.05,
     "activeBlockingFatigueMin": 0.25,
     "activeBlockingFatiguePercentBase": 0.25,
+    "weaponSkillGainBaseModifier": 0.6,
+    "armorSkillGainBaseModifier": 0.8,
     "weaponTier1": {
         "weaponSkillMin": 25,
         "criticalStrikeChance": 10,
@@ -36,7 +39,8 @@
         "handToHandBaseDamageMax": 4,
         "handToHandKnockdownChance": 10,
         "handToHandKnockdownDamageMultiplier": 0.1,
-        "activeBlockingFatiguePercent": 0.2
+        "activeBlockingFatiguePercent": 0.2,
+        "weaponSkillGainModifier": 0.65
     },
     "weaponTier2": {
         "weaponSkillMin": 50,
@@ -53,7 +57,8 @@
         "handToHandBaseDamageMax": 7,
         "handToHandKnockdownChance": 20,
         "handToHandKnockdownDamageMultiplier": 0.2,
-        "activeBlockingFatiguePercent": 0.15
+        "activeBlockingFatiguePercent": 0.15,
+        "weaponSkillGainModifier": 0.7
     },
     "weaponTier3": {
         "weaponSkillMin": 75,
@@ -70,7 +75,8 @@
         "handToHandBaseDamageMax": 11,
         "handToHandKnockdownChance": 25,
         "handToHandKnockdownDamageMultiplier": 0.35,
-        "activeBlockingFatiguePercent": 0.1
+        "activeBlockingFatiguePercent": 0.1,
+        "weaponSkillGainModifier": 0.8
     },
     "weaponTier4": {
         "weaponSkillMin": 100,
@@ -87,6 +93,7 @@
         "handToHandBaseDamageMax": 14,
         "handToHandKnockdownChance": 30,
         "handToHandKnockdownDamageMultiplier": 0.5,
-        "activeBlockingFatiguePercent": 0.05
+        "activeBlockingFatiguePercent": 0.05,
+        "weaponSkillGainModifier": 1
     }
 }
