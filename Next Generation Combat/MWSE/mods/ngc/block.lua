@@ -104,16 +104,16 @@ function this.createBlockUI(e)
     local bottomLeftBar = multiMenu:findChild(tes3ui.registerID("MenuMulti_sneak_icon")).parent
 
     -- Create an icon that matches the sneak icon's look.
-    local alchemyFrame = bottomLeftBar:createThinBorder({})
-    alchemyFrame.visible = false
-    alchemyFrame.autoHeight = true
-    alchemyFrame.autoWidth = true
-    alchemyFrame.paddingAllSides = 2
-    alchemyFrame.borderAllSides = 2
-    alchemyFrame:createImage({ path = "icons/ngc/active_block.tga" })
+    local blockFrame = bottomLeftBar:createThinBorder({})
+    blockFrame.visible = false
+    blockFrame.autoHeight = true
+    blockFrame.autoWidth = true
+    blockFrame.paddingAllSides = 2
+    blockFrame.borderAllSides = 2
+    blockFrame:createImage({ path = "icons/ngc/active_block.tga" })
 
-    this.activeBlockFrame = alchemyFrame
-    alchemyFrame:register("destroy", function()
+    this.activeBlockFrame = blockFrame
+    blockFrame:register("destroy", function()
         this.activeBlockFrame = nil
     end)
 end
