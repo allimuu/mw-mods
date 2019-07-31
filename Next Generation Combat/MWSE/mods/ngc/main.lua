@@ -42,8 +42,16 @@ local function alwaysHit(e)
     if common.config.toggleActiveBlocking then
         if e.target == tes3.player then
             if block.currentlyActiveBlocking then
-                tes3.messageBox({ message = "Setting max block!" })
+                if common.config.showDebugMessages then
+                    tes3.messageBox({ message = "Setting max block!" })
+                end
                 block.setMaxBlock()
+
+                -- check if reduced min fatigue for active blocking
+                local fatigueMin = tes3.mobilePlayer.fatigue.base * common.config.activeBlockingFatigueMin
+                if tes3.mobilePlayer.fatigue.current < fatigueMin then
+                    block.activeBlockingOff()
+                end
             else
                 block.resetMaxBlock()
             end
@@ -408,7 +416,7 @@ local function onAttack(e)
     local weapon = sourceActor.readiedWeapon
 
     -- on hand to hand attacks that are not from werewolves
-    if (weapon == nil and targetActor and sourceActor.werewolf == false) then
+    if (weapon == nil and targetActor and sourceActor.werewolf == false and common.config.toggleWeaponPerks) then
         -- this must be a hand to hand attack
         if sourceActor.handToHand then
             local bonusDamage
@@ -555,8 +563,13 @@ local function initialized(e)
         event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
-        event.register("keyDown", block.keyPressed, { filter = 44 } )
-        event.register("keyUp", block.keyReleased, { filter = 44 } )
+        if common.config.toggleActiveBlocking then
+            event.register("keyDown", block.keyPressed, { filter = common.config.activeBlockKeyCode } )
+            event.register("keyUp", block.keyReleased, { filter = common.config.activeBlockKeyCode } )
+            -- release block on any menu mode enter
+            event.register("menuEnter", block.keyReleased)
+            event.register("uiCreated", block.createBlockUI, { filter = "MenuMulti" })
+        end
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
 	end
