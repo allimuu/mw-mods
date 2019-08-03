@@ -546,6 +546,7 @@ end
 
 local function onExerciseSkill(e)
     local weaponSkills = {
+        [0] = true, -- block
         [4] = true, -- blunt
         [5] = true, -- long blade
         [6] = true, -- axe
