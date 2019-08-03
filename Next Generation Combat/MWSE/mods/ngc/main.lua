@@ -2,7 +2,13 @@
 local version = 1.0
 
 -- modules
-local common = require('ngc.common')
+-- init common and load
+local common = require("ngc.common")
+common.loadConfig()
+-- init mcm and load
+local mcm = require("ngc.mcm")
+event.register("modConfigReady", mcm.registerModConfig)
+-- weapon modules
 local multistrike
 local critical
 local bleed
@@ -73,21 +79,29 @@ local function onLoaded(e)
     enemyHealthBar = tes3ui.findMenu(menu_multi):findChild(health_bar)
 
     -- set GMSTs
-    -- vanilla hand to hand disabled
-    local minHandToHand = tes3.findGMST("fMinHandToHandMult")
-    local maxHandToHand = tes3.findGMST("fMaxHandToHandMult")
-    minHandToHand.value = 0
-    maxHandToHand.value = 0
+    if common.config.toggleHandToHandPerks then
+        -- vanilla hand to hand disabled
+        local minHandToHand = tes3.findGMST("fMinHandToHandMult")
+        local maxHandToHand = tes3.findGMST("fMaxHandToHandMult")
+        minHandToHand.value = 0
+        maxHandToHand.value = 0
+    end
 
-    -- tweak knockdown values
-    local knockdownMult = tes3.findGMST("fKnockDownMult")
-    local knockdownOddsMult = tes3.findGMST("iKnockDownOddsMult")
-    knockdownMult.value = common.config.knockdownMultGMST
-    knockdownOddsMult.value = common.config.knockdownOddsMultGMST
+    if common.config.toggleBalanceGMSTs then
+        -- tweak knockdown values
+        local knockdownMult = tes3.findGMST("fKnockDownMult")
+        local knockdownOddsMult = tes3.findGMST("iKnockDownOddsMult")
+        knockdownMult.value = common.config.gmst.knockdownMult
+        knockdownOddsMult.value = common.config.gmst.knockdownOddsMult
 
-    -- tweak fatigue combat values
-    local fatigueAttackMult = tes3.findGMST("fFatigueAttackMult")
-    fatigueAttackMult.value = common.config.fatigueAttackMultGMST
+        -- tweak fatigue combat values
+        local fatigueAttackMult = tes3.findGMST("fFatigueAttackMult")
+        local fatigueAttackBase = tes3.findGMST("fFatigueAttackBase")
+        local weaponFatigueMult = tes3.findGMST("fWeaponFatigueMult")
+        fatigueAttackMult.value = common.config.gmst.fatigueAttackMult
+        fatigueAttackBase.value = common.config.gmst.fatigueAttackBase
+        weaponFatigueMult.value = common.config.gmst.weaponFatigueMult
+    end
 
     -- get block default GMSTs
     local blockMaxGMST = tes3.findGMST("iBlockMaxChance")
@@ -178,6 +192,13 @@ local function damageReductionFromSanctuary(defender, damageTaken)
     return damageReduced
 end
 
+-- Calculate the reduction from attackers fatigue left
+local function damageReductionFromFatigue(attacker, damageTaken)
+    local fatigueMod = ((1 - (attacker.fatigue.current / attacker.fatigue.base)) * common.config.fatigueReductionModifier)
+
+    return damageTaken * fatigueMod
+end
+
 -- custom knockdown event
 local function playKnockdown(targetReference, source)
     if (common.config.showMessages and source == tes3.player) then
@@ -229,31 +250,46 @@ local function onDamage(e)
     local targetActor = defender
 
     local damageTaken = e.damage
-    local damageAdded
-    local damageReduced
+    local damageAdded = 0
+    local damageReduced = 0
 
     if e.source == 'attack' then
-        if attacker and common.config.toggleAlwaysHit then
-            -- roll for blind first
-            if attacker.blind > 0 then
-                local missChanceRoll = math.random(100)
-                if attacker.blind >= missChanceRoll then
-                    -- you blind, you miss
-                    if (common.config.showMessages and source == tes3.player) then
-                        tes3.messageBox({ message = "Missed!" })
+        if common.config.toggleAlwaysHit then
+            if attacker then
+                -- roll for blind first
+                if attacker.blind > 0 then
+                    local missChanceRoll = math.random(100)
+                    if attacker.blind >= missChanceRoll then
+                        -- you blind, you miss
+                        if (common.config.showMessages and source == tes3.player) then
+                            tes3.messageBox({ message = "Missed!" })
+                        end
+                        -- no damage
+                        return
                     end
-                    -- no damage
-                    return
+                end
+
+                local reductionFromFatigue = damageReductionFromFatigue(attacker, damageTaken)
+                if reductionFromFatigue then
+                    damageReduced = damageReduced + reductionFromFatigue
                 end
             end
-        end
 
-        if defender and common.config.toggleAlwaysHit then
-            -- reduction from sanctuary
-            local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
-            if reductionFromSanctuary then
-                damageTaken = damageTaken - reductionFromSanctuary
-                damageReduced = reductionFromSanctuary
+            if defender then
+                -- reduction from sanctuary
+                local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
+                if reductionFromSanctuary then
+                    damageReduced = damageReduced + reductionFromSanctuary
+                end
+            end
+
+            if damageReduced > 0 then
+                local newDamageTaken = damageTaken - damageReduced
+                if newDamageTaken > 0 then
+                    damageTaken = newDamageTaken
+                else
+                    damageTaken = 0
+                end
             end
         end
 
@@ -380,7 +416,6 @@ local function onDamage(e)
             -- reduction from sanctuary
             local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
             if reductionFromSanctuary then
-                damageTaken = damageTaken - reductionFromSanctuary
                 damageReduced = reductionFromSanctuary
             end
         end
@@ -416,7 +451,11 @@ local function onAttack(e)
     local weapon = sourceActor.readiedWeapon
 
     -- on hand to hand attacks that are not from werewolves
-    if (weapon == nil and targetActor and sourceActor.werewolf == false and common.config.toggleWeaponPerks) then
+    if (weapon == nil and
+        targetActor and
+        sourceActor.werewolf == false and
+        common.config.toggleWeaponPerks and
+        common.config.toggleHandToHandPerks) then
         -- this must be a hand to hand attack
         if sourceActor.handToHand then
             local bonusDamage
@@ -591,8 +630,6 @@ end
 
 local function initialized(e)
 	if tes3.isModActive("Next Generation Combat.esp") then
-        common.loadConfig()
-
         -- load modules
         multistrike = require("ngc.perks.multistrike")
         critical = require("ngc.perks.critical")
@@ -610,8 +647,8 @@ local function initialized(e)
         event.register("damage", onDamage)
         event.register("exerciseSkill", onExerciseSkill)
         if common.config.toggleActiveBlocking then
-            event.register("keyDown", block.keyPressed, { filter = common.config.activeBlockKeyCode } )
-            event.register("keyUp", block.keyReleased, { filter = common.config.activeBlockKeyCode } )
+            event.register("keyDown", block.keyPressed, { filter = common.config.activeBlockKey.keyCode } )
+            event.register("keyUp", block.keyReleased, { filter = common.config.activeBlockKey.keyCode } )
             -- release block on any menu mode enter
             event.register("menuEnter", block.keyReleased)
             event.register("uiCreated", block.createBlockUI, { filter = "MenuMulti" })

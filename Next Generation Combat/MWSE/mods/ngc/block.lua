@@ -41,6 +41,14 @@ end
 
 -- Block events
 function this.keyPressed(e)
+    if (not common.keybindTest(common.config.activeBlockingKey, e)) then
+        return
+    end
+
+    if tes3.menuMode() then
+        return
+    end
+
     local player = tes3.mobilePlayer
     local readiedShield = player.readiedShield
 

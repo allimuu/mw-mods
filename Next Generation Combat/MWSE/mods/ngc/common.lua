@@ -15,7 +15,8 @@ local defaultConfig = {
     toggleAlwaysHit = true,
     toggleWeaponPerks = true,
     toggleActiveBlocking = true,
-    activeBlockKeyCode = 44,
+    toggleHandToHandPerks = true,
+    toggleBalanceGMSTs = true,
     creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,
@@ -26,15 +27,25 @@ local defaultConfig = {
     bleedMultiplier = 0.35,
     handToHandBaseDamageMin = 2,
     handToHandBaseDamageMax = 3,
-    disableDefaultKnockdowns = true,
     agilityKnockdownChanceMinMod = 0.25,
-    knockdownMultGMST = 0.8,
-    knockdownOddsMultGMST = 70,
-    fatigueAttackMultGMST = 0.2,
     activeBlockingFatigueMin = 0.25,
     activeBlockingFatiguePercentBase = 0.25,
     weaponSkillGainBaseModifier = 0.6,
     armorSkillGainBaseModifier = 0.8,
+    fatigueReductionModifier = 0.3,
+    activeBlockKey = {
+        keyCode = 44,
+        isShiftDown = false,
+        isAltDown = false,
+        isControlDown = false,
+    },
+    gmst = {
+        knockdownMult = 0.8,
+        knockdownOddsMult = 70,
+        fatigueAttackMult = 0.2,
+        fatigueAttackBase = 0,
+        weaponFatigueMult = 0,
+    },
     weaponTier1 = {
         weaponSkillMin = 25,
         criticalStrikeChance = 10,
@@ -131,5 +142,11 @@ function this.getARforTarget(target)
     return totalAR
 end
 
+function this.keybindTest(b, e)
+    return (b.keyCode == e.keyCode) and
+    (b.isShiftDown == e.isShiftDown) and
+    (b.isAltDown == e.isAltDown) and
+    (b.isControlDown == e.isControlDown)
+end
 
 return this
