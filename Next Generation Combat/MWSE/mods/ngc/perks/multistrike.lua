@@ -23,7 +23,7 @@ end
 
 local function bonusDamage(source, damage)
     if (common.config.showMessages and source == tes3.player) then
-        tes3.messageBox({ message = "Double damage!" })
+        tes3.messageBox({ message = "Double strike!" })
     end
     return damage * common.config.multistrikeBonuseDamageMultiplier
 end

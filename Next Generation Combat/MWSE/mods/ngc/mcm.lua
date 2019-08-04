@@ -24,6 +24,16 @@ local function createBlockCategory(page)
         }
     }
 
+    category:createOnOffButton{
+        label = "Use Right Mouse button",
+        description = "Allows right mouse button to activate blocking. Note: assigned key above will still work too.",
+        variable = mwse.mcm.createTableVariable{
+            id = "toggleActiveBlockingMouse2",
+            table = common.config
+        },
+        restartRequired = true
+    }
+
     category:createTextField{
         label = "Minimum fatigue threshold",
         description = "This is the minimum percentage of fatigue you can have before active blocking will not active/turn off. Default: 0.25 or 25%",
@@ -74,7 +84,8 @@ local function createFeatureCategory(page)
         description = "Use this to turn on/off the active blocking feature.",
         variable = mwse.mcm.createTableVariable{
             id = "toggleActiveBlocking",
-            table = common.config
+            table = common.config,
+            restartRequired = true
         }
     }
 
@@ -83,7 +94,18 @@ local function createFeatureCategory(page)
         description = "Use this to turn on/off the hand to hand feature. This reverts hand to hand to vanilla functionality with no additional perks.",
         variable = mwse.mcm.createTableVariable{
             id = "toggleHandToHandPerks",
-            table = common.config
+            table = common.config,
+            restartRequired = true
+        }
+    }
+
+    category:createOnOffButton{
+        label = "Toggle Skill Gain Feature",
+        description = "Use this to turn on/off skill experience gain feature. Turn this off if other mods do this.",
+        variable = mwse.mcm.createTableVariable{
+            id = "toggleSkillGain",
+            table = common.config,
+            restartRequired = true
         }
     }
 
@@ -92,9 +114,11 @@ local function createFeatureCategory(page)
         description = "Use this to turn on/off the balance GMSTs. This allows other mods to control these GMSTs.",
         variable = mwse.mcm.createTableVariable{
             id = "toggleBalanceGMSTs",
-            table = common.config
+            table = common.config,
+            restartRequired = true
         }
     }
+
 end
 
 local function createMessageSettings(page)
@@ -193,11 +217,31 @@ local function createGeneralSettings(page)
             numbersOnly = true
         },
     }
+
+    category:createTextField{
+        label = "Fatigue reduction modifier",
+        description = "The modifier to scale how much low fatigue reduces damage scaling. Default: 0.2 or 20% less damage at zero fatigue.",
+        variable = mwse.mcm.createTableVariable{
+            id = "sanctuaryModifier",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
 end
 
 local function createBaseWeaponPerkSettings(page)
     local category = page:createCategory{
         label = "Base Weapon Perk Settings"
+    }
+
+    category:createTextField{
+        label = "Execute health threshold",
+        description = "The percentage health threshold that will allow execute damage (short blade). Default: 0.25 or 25%",
+        variable = mwse.mcm.createTableVariable{
+            id = "executeThreshold",
+            table = common.config,
+            numbersOnly = true
+        },
     }
 
     category:createTextField{
@@ -319,8 +363,8 @@ local function createGMSTSettings(page)
     }
 
     category:createTextField{
-        label = "Fatigue attack multiplier (fFatigueAttackMult)",
-        description = "",
+        label = "Fatigue attack encumberence multiplier (fFatigueAttackMult)",
+        description = "GMST for fatigue cost on attack multiplier of encumberence. Default: 0.2. Vanilla: 0",
         variable = mwse.mcm.createTableVariable{
             id = "fatigueAttackMult",
             table = common.config.gmst,
@@ -330,7 +374,7 @@ local function createGMSTSettings(page)
 
     category:createTextField{
         label = "Fatigue attack base (fFatigueAttackBase)",
-        description = "",
+        description = "GMST for fatigue base cost for attacks. Default: 3. Vanilla: 2",
         variable = mwse.mcm.createTableVariable{
             id = "fatigueAttackBase",
             table = common.config.gmst,
@@ -340,7 +384,7 @@ local function createGMSTSettings(page)
 
     category:createTextField{
         label = "Weapon fatigue multiplier (fWeaponFatigueMult)",
-        description = "",
+        description = "GMST for fatigue cost on attack multiplier of weapon weight and attack. Default: 0.5. Vanilla: 0.25",
         variable = mwse.mcm.createTableVariable{
             id = "weaponFatigueMult",
             table = common.config.gmst,
@@ -349,12 +393,233 @@ local function createGMSTSettings(page)
     }
 end
 
+local function createWeaponPerkSettings(page, weaponTier)
+    local category = page:createCategory{
+        label = "General Weapon Tier Settings"
+    }
+    category:createTextField{
+        label = "Weapon skill (min)",
+        description = "Weapon skill level that this tier starts at. It is not recommended to modify this but it can be useful if you have an uncapped game and would rather things scale up to level 200 weapon skill for example.",
+        variable = mwse.mcm.createTableVariable{
+            id = "weaponSkillMin",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    local shortBlade = page:createCategory{
+        label = "Short Blade"
+    }
+
+    shortBlade:createTextField{
+        label = "Critical Strike Chance",
+        description = "Chance to perform a critical strike.",
+        variable = mwse.mcm.createTableVariable{
+            id = "criticalStrikeChance",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        shortBlade:createTextField{
+            label = "Execute damage multiplier",
+            description = "The multiplier for execute damage when enemy is below health threshold.",
+            variable = mwse.mcm.createTableVariable{
+                id = "executeDamageMultiplier",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local longBlade = page:createCategory{
+        label = "Long Blade"
+    }
+
+    longBlade:createTextField{
+        label = "Multistrike damage multiplier",
+        description = "Damage multiplier for a multistrike.",
+        variable = mwse.mcm.createTableVariable{
+            id = "multistrikeDamageMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        longBlade:createTextField{
+            label = "Multistrike double strike chance",
+            description = "Chance to perform a double damage strike on a multistrike.",
+            variable = mwse.mcm.createTableVariable{
+                id = "multistrikeBonusChance",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local axe = page:createCategory{
+        label = "Axe"
+    }
+
+    axe:createTextField{
+        label = "Bleed chance",
+        description = "Chance to perform a bleed",
+        variable = mwse.mcm.createTableVariable{
+            id = "bleedChance",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        axe:createTextField{
+            label = "Max bleed stacks",
+            description = "Maximum number of bleed stacks",
+            variable = mwse.mcm.createTableVariable{
+                id = "maxBleedStack",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local bluntWeapon = page:createCategory{
+        label = "Blunt Weapon"
+    }
+
+    bluntWeapon:createTextField{
+        label = "Stun chance",
+        description = "Chance to stun for 1 second",
+        variable = mwse.mcm.createTableVariable{
+            id = "stunChance",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        bluntWeapon:createTextField{
+            label = "Armor damage multiplier",
+            description = "The multiplier for each pointer of armor rating the enemy has",
+            variable = mwse.mcm.createTableVariable{
+                id = "bonusArmorDamageMultiplier",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local spear = page:createCategory{
+        label = "Spear"
+    }
+
+    spear:createTextField{
+        label = "Bonus damage for fatigue (momentum)",
+        description = "This is the bonus damage if you have momentum (have higher fatigue percentange than your enemy.",
+        variable = mwse.mcm.createTableVariable{
+            id = "bonusDamageForFatigueMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        spear:createTextField{
+            label = "Adrenaline Rush chance",
+            description = "Chance on each hit to gain Adrenaline Rush (fatigue restore).",
+            variable = mwse.mcm.createTableVariable{
+                id = "adrenalineRushChance",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local handToHand = page:createCategory{
+        label = "Hand to Hand"
+    }
+
+    handToHand:createTextField{
+        label = "Hand to hand minimum damage",
+        description = "Minimum damage roll for hand to hand in this tier",
+        variable = mwse.mcm.createTableVariable{
+            id = "handToHandBaseDamageMin",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    handToHand:createTextField{
+        label = "Hand to hand maximum damage",
+        description = "Maximum damage roll for hand to hand in this tier",
+        variable = mwse.mcm.createTableVariable{
+            id = "handToHandBaseDamageMax",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    handToHand:createTextField{
+        label = "Hand to hand knockdown chance",
+        description = "Chance to perform a knockdown on hit",
+        variable = mwse.mcm.createTableVariable{
+            id = "handToHandKnockdownChance",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    handToHand:createTextField{
+        label = "Hand to hand knockdown damage multiplier",
+        description = "Damage multiplier for any damage when enemy is knockedown",
+        variable = mwse.mcm.createTableVariable{
+            id = "handToHandKnockdownDamageMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    local block = page:createCategory{
+        label = "Block"
+    }
+
+    block:createTextField{
+        label = "Block fatigue drain",
+        description = "Fatigue percentage drain while active blocking",
+        variable = mwse.mcm.createTableVariable{
+            id = "activeBlockingFatiguePercent",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    local skillGain = page:createCategory{
+        label = "Skill Gain"
+    }
+
+    skillGain:createTextField{
+        label = "Weapon skill gain modifier",
+        description = "Modifier for weapon skill experience gain per tier",
+        variable = mwse.mcm.createTableVariable{
+            id = "weaponSkillGainModifier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+end
+
+
 -- Handle mod config menu.
 function this.registerModConfig()
     mwse.log("Registering MCM")
     local template = mwse.mcm.createTemplate("Next Generation Combat")
     template:saveOnClose("ngc", common.config)
 
+    --[[
+        General settings
+    ]]--
     local page = template:createSideBarPage{
         label = "Settings",
         description = "Toggle and configure features."
@@ -368,6 +633,33 @@ function this.registerModConfig()
     createHandToHandPerkSettings(page)
     createSkillGainSettings(page)
     createGMSTSettings(page)
+
+    --[[
+        Weapon tier settings
+    ]]--
+    local weaponTier1Page = template:createSideBarPage{
+        label = "Perks (Apprentice)",
+        description = "Perk settings for Apprentice weapon tier (>25 skill)."
+    }
+    createWeaponPerkSettings(weaponTier1Page, "weaponTier1")
+
+    local weaponTier2Page = template:createSideBarPage{
+        label = "Perks (Journeyman)",
+        description = "Perk settings for Journeyman weapon tier (>50 skill)."
+    }
+    createWeaponPerkSettings(weaponTier2Page, "weaponTier2")
+
+    local weaponTier3Page = template:createSideBarPage{
+        label = "Perks (Expert)",
+        description = "Perk settings for Expert weapon tier (>75 skill)."
+    }
+    createWeaponPerkSettings(weaponTier3Page, "weaponTier3")
+
+    local weaponTier4Page = template:createSideBarPage{
+        label = "Perks (Master)",
+        description = "Perk settings for Master weapon tier (>100 skill)."
+    }
+    createWeaponPerkSettings(weaponTier4Page, "weaponTier4")
 
     mwse.mcm.register(template)
 end

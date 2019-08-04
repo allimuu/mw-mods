@@ -53,7 +53,9 @@ function this.perform(damage, target, targetActor, weaponSkill)
                 timer = timer.start({
                     duration = 1,
                     callback = function ()
-                        bleedTick(damageTick, targetActor)
+                        if targetActor then
+                            bleedTick(damageTick, targetActor)
+                        end
                     end,
                     iterations = 5
                 })
@@ -66,7 +68,9 @@ function this.perform(damage, target, targetActor, weaponSkill)
                 timer = timer.start({
                     duration = 1,
                     callback = function ()
-                        bleedTick(damageTick, targetActor)
+                        if targetActor then
+                            bleedTick(damageTick, targetActor)
+                        end
                     end,
                     iterations = 5
                 })
@@ -82,7 +86,9 @@ function this.perform(damage, target, targetActor, weaponSkill)
                 common.currentlyBleeding[target.id].timer = timer.start({
                     duration = 1,
                     callback = function ()
-                        bleedTick(damageTick, targetActor)
+                        if targetActor then
+                            bleedTick(damageTick, targetActor)
+                        end
                     end,
                     iterations = 5
                 })

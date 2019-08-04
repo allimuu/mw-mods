@@ -16,10 +16,12 @@ local defaultConfig = {
     toggleWeaponPerks = true,
     toggleActiveBlocking = true,
     toggleHandToHandPerks = true,
+    toggleSkillGain = true,
     toggleBalanceGMSTs = true,
     creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,
+    fatigueReductionModifier = 0.2,
     sanctuaryModifier = 0.35,
     multistrikeStrikesNeeded = 3,
     multistrikeBonuseDamageMultiplier = 1,
@@ -32,7 +34,8 @@ local defaultConfig = {
     activeBlockingFatiguePercentBase = 0.25,
     weaponSkillGainBaseModifier = 0.6,
     armorSkillGainBaseModifier = 0.8,
-    fatigueReductionModifier = 0.3,
+    toggleActiveBlockingMouse2 = false,
+    executeThreshold = 0.25,
     activeBlockKey = {
         keyCode = 44,
         isShiftDown = false,
@@ -43,8 +46,8 @@ local defaultConfig = {
         knockdownMult = 0.8,
         knockdownOddsMult = 70,
         fatigueAttackMult = 0.2,
-        fatigueAttackBase = 0,
-        weaponFatigueMult = 0,
+        fatigueAttackBase = 3,
+        weaponFatigueMult = 0.5,
     },
     weaponTier1 = {
         weaponSkillMin = 25,
@@ -77,6 +80,7 @@ local defaultConfig = {
         handToHandKnockdownDamageMultiplier = 0.2,
         activeBlockingFatiguePercent = 0.15,
         weaponSkillGainModifier = 0.7,
+        executeDamageMultiplier = 0.5,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -95,6 +99,7 @@ local defaultConfig = {
         handToHandKnockdownDamageMultiplier = 0.35,
         activeBlockingFatiguePercent = 0.1,
         weaponSkillGainModifier = 0.8,
+        executeDamageMultiplier = 1,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -113,6 +118,7 @@ local defaultConfig = {
         handToHandKnockdownDamageMultiplier = 0.5,
         activeBlockingFatiguePercent = 0.05,
         weaponSkillGainModifier = 1,
+        executeDamageMultiplier = 1.5,
     },
 }
 

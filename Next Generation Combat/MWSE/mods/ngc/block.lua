@@ -41,8 +41,15 @@ end
 
 -- Block events
 function this.keyPressed(e)
-    if (not common.keybindTest(common.config.activeBlockingKey, e)) then
+    if (not common.config.toggleActiveBlockingMouse2 and
+        not common.keybindTest(common.config.activeBlockKey, e)) then
         return
+    end
+
+    if common.config.toggleActiveBlockingMouse2 then
+        if e.button ~= 1 then
+            return
+        end
     end
 
     if tes3.menuMode() then

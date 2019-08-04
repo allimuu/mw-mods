@@ -173,6 +173,23 @@ local function strengthModifier(damage, strength)
     return damage * (0.5 + (strength / 100))
 end
 
+-- Blinkd check
+local function blindCheck(attacker, source)
+    if attacker.blind > 0 then
+        local missChanceRoll = math.random(100)
+        if attacker.blind >= missChanceRoll then
+            -- you blind, you miss
+            if (common.config.showMessages and source == tes3.player) then
+                tes3.messageBox({ message = "Missed!" })
+            end
+            -- no damage
+            return true
+        end
+    end
+
+    return false
+end
+
 -- Calculate the reduction from the defenders sanctuary bonus
 local function damageReductionFromSanctuary(defender, damageTaken)
     local damageReduced
@@ -197,6 +214,35 @@ local function damageReductionFromFatigue(attacker, damageTaken)
     local fatigueMod = ((1 - (attacker.fatigue.current / attacker.fatigue.base)) * common.config.fatigueReductionModifier)
 
     return damageTaken * fatigueMod
+end
+
+local function getTotalDamageReduced(attacker, defender, damageTaken)
+    local newDamageTaken
+    local damageReduced = 0
+
+    if attacker then
+        local reductionFromFatigue = damageReductionFromFatigue(attacker, damageTaken)
+        if reductionFromFatigue then
+            damageReduced = damageReduced + reductionFromFatigue
+        end
+    end
+
+    if defender then
+        -- reduction from sanctuary
+        local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
+        if reductionFromSanctuary then
+            damageReduced = damageReduced + reductionFromSanctuary
+        end
+    end
+
+    if damageReduced > 0 then
+        newDamageTaken = damageTaken - damageReduced
+        if newDamageTaken > 0 then
+            return newDamageTaken, damageReduced
+        else
+            return 0, damageReduced
+        end
+    end
 end
 
 -- custom knockdown event
@@ -257,39 +303,19 @@ local function onDamage(e)
         if common.config.toggleAlwaysHit then
             if attacker then
                 -- roll for blind first
-                if attacker.blind > 0 then
-                    local missChanceRoll = math.random(100)
-                    if attacker.blind >= missChanceRoll then
-                        -- you blind, you miss
-                        if (common.config.showMessages and source == tes3.player) then
-                            tes3.messageBox({ message = "Missed!" })
-                        end
-                        -- no damage
-                        return
-                    end
-                end
-
-                local reductionFromFatigue = damageReductionFromFatigue(attacker, damageTaken)
-                if reductionFromFatigue then
-                    damageReduced = damageReduced + reductionFromFatigue
+                if blindCheck(attacker, source) then
+                    return
                 end
             end
 
-            if defender then
-                -- reduction from sanctuary
-                local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
-                if reductionFromSanctuary then
-                    damageReduced = damageReduced + reductionFromSanctuary
-                end
+            local newDamageTaken
+            local newDamageReduced
+            newDamageTaken, newDamageReduced = getTotalDamageReduced(attacker, defender, damageTaken)
+            if newDamageTaken ~= nil then
+                damageTaken = newDamageTaken
             end
-
-            if damageReduced > 0 then
-                local newDamageTaken = damageTaken - damageReduced
-                if newDamageTaken > 0 then
-                    damageTaken = newDamageTaken
-                else
-                    damageTaken = 0
-                end
+            if newDamageReduced ~= nil then
+                damageReduced = newDamageReduced
             end
         end
 
@@ -375,13 +401,18 @@ local function onDamage(e)
                 elseif weapon.object.type > -1 then
                     -- short blade
                     local weaponSkill = sourceActor.shortBlade.current
+                    local damageDone
+                    local critDamage
                     damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
 
                     if common.config.toggleWeaponPerks then
-                        local damageDone = critical.perform(damageTaken, target, weaponSkill)
+                        damageDone, critDamage = critical.perform(damageTaken, source, targetActor, weaponSkill)
                         if damageDone ~= nil then
-                            if source == tes3.player then
+                            if (critDamage > 0 and source == tes3.player) then
                                 damageMessage("Critical strike!", damageDone)
+                            elseif (damageDone > 0 and source == tes3.player and common.config.showDamageNumbers) then
+                                -- just show extra damage for execute
+                                damageMessage("", damageDone)
                             end
                             damageAdded = damageAdded + damageDone
                         end
@@ -391,6 +422,9 @@ local function onDamage(e)
         end
     end
 
+    --[[
+        Hand to hand block
+    ]]--
     if e.source == nil and handToHandReferences[target.id] then
         -- nil sources of damage come from bleed and hand to hand so are special cases
         local handToHandAttacker = handToHandReferences[target.id]
@@ -399,30 +433,27 @@ local function onDamage(e)
 
         if common.config.toggleAlwaysHit then
             -- roll for blind first
-            if handToHandAttacker.blind > 0 then
-                local missChanceRoll = math.random(100)
-                if handToHandAttacker.blind >= missChanceRoll then
-                    -- you blind, you miss
-                    if (common.config.showMessages and source == tes3.player) then
-                        tes3.messageBox({ message = "Missed!" })
-                    end
-                    -- no damage
-                    return
-                end
+            if blindCheck(handToHandAttacker.attacker, source) then
+                return
             end
-        end
 
-        if defender and common.config.toggleAlwaysHit then
-            -- reduction from sanctuary
-            local reductionFromSanctuary = damageReductionFromSanctuary(defender, damageTaken)
-            if reductionFromSanctuary then
-                damageReduced = reductionFromSanctuary
+            local newDamageTaken
+            local newDamageReduced
+            newDamageTaken, newDamageReduced = getTotalDamageReduced(handToHandAttacker.attacker, defender, damageTaken)
+            if newDamageTaken ~= nil then
+                damageTaken = newDamageTaken
+            end
+            if newDamageReduced ~= nil then
+                damageReduced = newDamageReduced
             end
         end
 
         damageAdded = coreBonusDamage(damageTaken, handToHandAttacker.weaponSkill, handToHandAttacker.attackBonus)
     end
 
+    --[[
+        Deal with any damage added or reduced by modifying e.damage
+    ]]--
     if damageAdded then
         -- we already have damageReduced taken into account with damageTaken
         e.damage = damageTaken + damageAdded
@@ -463,9 +494,9 @@ local function onAttack(e)
 
             handToHandReferences[target.id] = {
                 attackerReference = source,
+                attacker = sourceActor,
                 weaponSkill = weaponSkill,
                 attackBonus = sourceActor.attackBonus,
-                blind = sourceActor.blind
             }
 
             local bonusKnockdownMod
@@ -559,6 +590,10 @@ local function onAttack(e)
                     end
                 end
                 targetActor:applyHealthDamage(bonusDamage, false, true, false)
+                -- we've done some damage, let's get some exp
+                if source == tes3.player then
+                    tes3.mobilePlayer:exerciseSkill(tes3.skill.handToHand, 1)
+                end
 
                 if source == tes3.player then
                     -- show enemy health bar
@@ -645,13 +680,20 @@ local function initialized(e)
         event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
-        event.register("exerciseSkill", onExerciseSkill)
+        if common.config.toggleSkillGain then
+            event.register("exerciseSkill", onExerciseSkill)
+        end
         if common.config.toggleActiveBlocking then
             event.register("keyDown", block.keyPressed, { filter = common.config.activeBlockKey.keyCode } )
             event.register("keyUp", block.keyReleased, { filter = common.config.activeBlockKey.keyCode } )
             -- release block on any menu mode enter
             event.register("menuEnter", block.keyReleased)
             event.register("uiCreated", block.createBlockUI, { filter = "MenuMulti" })
+
+            if common.config.toggleActiveBlockingMouse2 then
+                event.register("mouseButtonDown", block.keyPressed, { filter = 1 } )
+                event.register("mouseButtonUp", block.keyReleased, { filter = 1 } )
+            end
         end
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
