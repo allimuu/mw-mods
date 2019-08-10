@@ -222,7 +222,7 @@ local function createGeneralSettings(page)
         label = "Fatigue reduction modifier",
         description = "The modifier to scale how much low fatigue reduces damage scaling. Default: 0.2 or 20% less damage at zero fatigue.",
         variable = mwse.mcm.createTableVariable{
-            id = "sanctuaryModifier",
+            id = "fatigueReductionModifier",
             table = common.config,
             numbersOnly = true
         },
@@ -269,6 +269,26 @@ local function createBaseWeaponPerkSettings(page)
         description = "Damage multiplier for bleed damage per stack. Default: 0.35 or 35% of damage per stack",
         variable = mwse.mcm.createTableVariable{
             id = "bleedMultiplier",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Hamstring modifier",
+        description = "The amount hamstring will slow someone down. Default: 0.5 or 50% of normal",
+        variable = mwse.mcm.createTableVariable{
+            id = "hamstringModifier",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Bow zoom level",
+        description = "Bow zoom level when sneaking and reaching full draw. Default: 2",
+        variable = mwse.mcm.createTableVariable{
+            id = "bowZoomLevel",
             table = common.config,
             numbersOnly = true
         },
@@ -391,6 +411,46 @@ local function createGMSTSettings(page)
             numbersOnly = true
         },
     }
+
+    category:createTextField{
+        label = "Projectile min speed (fProjectileMinSpeed)",
+        description = "GMST for min speed of projectiles (arrow/bolt). Default: 960. Vanilla: 400",
+        variable = mwse.mcm.createTableVariable{
+            id = "projectileMinSpeed",
+            table = common.config.gmst,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Projectile max speed (fProjectileMaxSpeed)",
+        description = "GMST for max speed of projectiles (arrow/bolt). Default: 7200. Vanilla: 3000",
+        variable = mwse.mcm.createTableVariable{
+            id = "projectileMaxSpeed",
+            table = common.config.gmst,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Thrown min speed (fThrownWeaponMinSpeed)",
+        description = "GMST for min speed of thrown weapons. Default: 360. Vanilla: 300",
+        variable = mwse.mcm.createTableVariable{
+            id = "thrownWeaponMinSpeed",
+            table = common.config.gmst,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Thrown max speed (fThrownWeaponMaxSpeed)",
+        description = "GMST for max speed of thrown weapons. Default: 1200. Vanilla: 1000",
+        variable = mwse.mcm.createTableVariable{
+            id = "thrownWeaponMaxSpeed",
+            table = common.config.gmst,
+            numbersOnly = true
+        },
+    }
 end
 
 local function createWeaponPerkSettings(page, weaponTier)
@@ -486,7 +546,7 @@ local function createWeaponPerkSettings(page, weaponTier)
     end
 
     local bluntWeapon = page:createCategory{
-        label = "Blunt Weapon"
+        label = "Blunt Weapon (maces/staves)"
     }
 
     bluntWeapon:createTextField{
@@ -501,7 +561,7 @@ local function createWeaponPerkSettings(page, weaponTier)
 
     if weaponTier ~= "weaponTier1" then
         bluntWeapon:createTextField{
-            label = "Armor damage multiplier",
+            label = "Armor damage multiplier (mace only)",
             description = "The multiplier for each pointer of armor rating the enemy has",
             variable = mwse.mcm.createTableVariable{
                 id = "bonusArmorDamageMultiplier",
@@ -580,6 +640,42 @@ local function createWeaponPerkSettings(page, weaponTier)
             numbersOnly = true
         },
     }
+
+    local bow = page:createCategory{
+        label = "Bow"
+    }
+
+    bow:createTextField{
+        label = "Full draw multiplier",
+        description = "Damage multiplier for when you full draw a weapon (player only)",
+        variable = mwse.mcm.createTableVariable{
+            id = "bowFullDrawMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    bow:createTextField{
+        label = "NPC draw multiplier",
+        description = "Damage multiplier for NPC full draw (this is applied on every NPC hit basically so just make it about 1/3 of player full draw)",
+        variable = mwse.mcm.createTableVariable{
+            id = "bowNPCDrawMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        bow:createTextField{
+            label = "Hamstring chance",
+            description = "Chance to cause hamstring on hit.",
+            variable = mwse.mcm.createTableVariable{
+                id = "hamstringChance",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
 
     local block = page:createCategory{
         label = "Block"

@@ -5,6 +5,10 @@ local this = {
     currentArmorCache = {},
     multistrikeCounters = {},
     currentlyRushed = {},
+    playerCurrentlyFullDrawn = false,
+    playerFullDrawTimer = nil,
+    bonusMultiplierFromAttackEvent = {},
+    currentlyHamstrung = {},
 }
 local defaultConfig = {
     showMessages = true,
@@ -36,6 +40,8 @@ local defaultConfig = {
     armorSkillGainBaseModifier = 0.8,
     toggleActiveBlockingMouse2 = false,
     executeThreshold = 0.25,
+    bowZoomLevel = 2,
+    hamstringModifier = 0.5,
     activeBlockKey = {
         keyCode = 44,
         isShiftDown = false,
@@ -48,6 +54,10 @@ local defaultConfig = {
         fatigueAttackMult = 0.2,
         fatigueAttackBase = 3,
         weaponFatigueMult = 0.5,
+        projectileMaxSpeed = 7200,
+        projectileMinSpeed = 960,
+        thrownWeaponMaxSpeed = 1200,
+        thrownWeaponMinSpeed = 360,
     },
     weaponTier1 = {
         weaponSkillMin = 25,
@@ -62,6 +72,8 @@ local defaultConfig = {
         handToHandKnockdownDamageMultiplier = 0.1,
         activeBlockingFatiguePercent = 0.2,
         weaponSkillGainModifier = 0.65,
+        bowFullDrawMultiplier = 0.25,
+        bowNPCDrawMultiplier = 0.1,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -81,6 +93,9 @@ local defaultConfig = {
         activeBlockingFatiguePercent = 0.15,
         weaponSkillGainModifier = 0.7,
         executeDamageMultiplier = 0.5,
+        bowFullDrawMultiplier = 0.50,
+        bowNPCDrawMultiplier = 0.17,
+        hamstringChance = 10,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -100,6 +115,9 @@ local defaultConfig = {
         activeBlockingFatiguePercent = 0.1,
         weaponSkillGainModifier = 0.8,
         executeDamageMultiplier = 1,
+        bowFullDrawMultiplier = 0.75,
+        bowNPCDrawMultiplier = 0.25,
+        hamstringChance = 15,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -119,6 +137,9 @@ local defaultConfig = {
         activeBlockingFatiguePercent = 0.05,
         weaponSkillGainModifier = 1,
         executeDamageMultiplier = 1.5,
+        bowFullDrawMultiplier = 1,
+        bowNPCDrawMultiplier = 0.33,
+        hamstringChance = 20,
     },
 }
 

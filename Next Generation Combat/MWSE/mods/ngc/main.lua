@@ -15,6 +15,7 @@ local bleed
 local stun
 local momentum
 local block
+local bow
 -- locals
 local attackBonusSpell = "ngc_ready_to_strike"
 local handToHandReferences = {}
@@ -28,14 +29,6 @@ local playerKnockdownTimer
 local function updatePlayer()
     if mwscript.getSpellEffects({reference = tes3.player, spell = attackBonusSpell}) then
         mwscript.removeSpell({reference = tes3.player, spell = attackBonusSpell})
-    end
-end
-
--- this function is just here to clean up the old ability from legacy saves
-local function onActorActivated(e)
-    local hasSpell = mwscript.getSpellEffects({reference = e.reference, spell = attackBonusSpell})
-    if hasSpell then
-        mwscript.removeSpell({reference = e.reference, spell = attackBonusSpell})
     end
 end
 
@@ -101,6 +94,16 @@ local function onLoaded(e)
         fatigueAttackMult.value = common.config.gmst.fatigueAttackMult
         fatigueAttackBase.value = common.config.gmst.fatigueAttackBase
         weaponFatigueMult.value = common.config.gmst.weaponFatigueMult
+
+        -- tweak marksman projectile values
+        local projectileMaxSpeed = tes3.findGMST("fProjectileMaxSpeed")
+        local projectileMinSpeed = tes3.findGMST("fProjectileMinSpeed")
+        local thrownWeaponMaxSpeed = tes3.findGMST("fThrownWeaponMaxSpeed")
+        local thrownWeaponMinSpeed = tes3.findGMST("fThrownWeaponMinSpeed")
+        projectileMaxSpeed.value = common.config.gmst.projectileMaxSpeed
+        projectileMinSpeed.value = common.config.gmst.projectileMinSpeed
+        thrownWeaponMaxSpeed.value = common.config.gmst.thrownWeaponMaxSpeed
+        thrownWeaponMinSpeed.value = common.config.gmst.thrownWeaponMinSpeed
     end
 
     -- get block default GMSTs
@@ -324,8 +327,8 @@ local function onDamage(e)
             local weapon = e.attacker.readiedWeapon
             local sourceAttackBonus = sourceActor.attackBonus
 
-            if attacker.actorType == 0 then
-                -- standard creature bonus
+            if (attacker.actorType == 0 and weapon == nil) then
+                -- standard creature bonus without weapons
                 local fortifyAttackMod = 0
                 if common.config.toggleAlwaysHit then
                     fortifyAttackMod = attackBonusMod(sourceAttackBonus)
@@ -340,6 +343,33 @@ local function onDamage(e)
                     local weaponSkill = sourceActor.marksman.current
                     -- core bonus damage for ranged hits
                     damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
+
+                    if weapon.object.type == 9 then
+                        -- bow hit
+                        if source == tes3.player then
+                            -- player bow hits
+                            local damageDone
+
+                            if common.bonusMultiplierFromAttackEvent[source.id] then
+                                damageDone = (damageAdded * common.bonusMultiplierFromAttackEvent[source.id])
+                                damageAdded = damageAdded + damageDone
+                                common.bonusMultiplierFromAttackEvent[source.id] = nil
+                                if common.config.showDamageNumbers then
+                                    -- just show extra damage for bow hits
+                                    damageMessage("", damageDone)
+                                end
+                            end
+                        else
+                            -- NPC bow hits
+                            local bonusMultiplier = bow.NPCFullDrawBonus(weaponSkill)
+                            if bonusMultiplier then
+                                damageAdded = damageAdded + (damageAdded * bonusMultiplier)
+                            end
+                        end
+
+                        -- hamstring chance
+                        bow.performHamstring(weaponSkill, source, target)
+                    end
                 elseif weapon.object.type > 6 then
                     -- axe
                     local weaponSkill = sourceActor.axe.current
@@ -380,7 +410,9 @@ local function onDamage(e)
                             -- just show extra damage for blunt weapon if no stun
                             damageMessage("", damageDone)
                         end
-                        damageAdded = damageAdded + damageDone
+                        if damageDone ~= nil then
+                            damageAdded = damageAdded + damageDone
+                        end
                     end
                 elseif weapon.object.type > 0 then
                     -- long blade
@@ -481,7 +513,9 @@ local function onAttack(e)
     local targetActor = e.targetMobile
     local weapon = sourceActor.readiedWeapon
 
-    -- on hand to hand attacks that are not from werewolves
+    --[[
+        Hand to hand block
+    ]]--
     if (weapon == nil and
         targetActor and
         sourceActor.werewolf == false and
@@ -616,6 +650,32 @@ local function onAttack(e)
             end
         end
     end
+
+    --[[
+        Bow block
+    ]]--
+    if (weapon and weapon.object.type == 9 and source == tes3.player and common.config.toggleWeaponPerks) then
+        local weaponSkill = sourceActor.marksman.current
+        local bonusMultiplier
+
+        if common.playerCurrentlyFullDrawn then
+            bonusMultiplier = bow.playerFullDrawBonus(weaponSkill)
+        end
+
+        if bonusMultiplier then
+            common.bonusMultiplierFromAttackEvent[source.id] = bonusMultiplier
+        else
+            common.bonusMultiplierFromAttackEvent[source.id] = nil
+        end
+    end
+end
+
+local function onCalcMoveSpeed(e)
+    local source = e.reference
+
+    if (common.currentlyHamstrung[source.id]) then
+        e.speed = e.speed * common.config.hamstringModifier
+    end
 end
 
 local function onExerciseSkill(e)
@@ -672,12 +732,12 @@ local function initialized(e)
         stun = require("ngc.perks.stun")
         momentum = require("ngc.perks.momentum")
         block = require("ngc.block")
+        bow = require("ngc.perks.bow")
 
         -- register events
         event.register("loaded", onLoaded)
         event.register("calcHitChance", alwaysHit)
         event.register("combatStopped", onCombatEnd)
-        event.register("mobileActivated", onActorActivated)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
         if common.config.toggleSkillGain then
@@ -694,6 +754,13 @@ local function initialized(e)
                 event.register("mouseButtonDown", block.keyPressed, { filter = 1 } )
                 event.register("mouseButtonUp", block.keyReleased, { filter = 1 } )
             end
+        end
+        if common.config.toggleWeaponPerks then
+            mge.enableZoom()
+            event.register("mouseButtonDown", bow.attackPressed, { filter = 0 })
+            event.register("mouseButtonUp", bow.attackReleased, { filter = 0 } )
+            event.register("menuEnter", bow.attackReleased)
+            event.register("calcMoveSpeed", onCalcMoveSpeed)
         end
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
