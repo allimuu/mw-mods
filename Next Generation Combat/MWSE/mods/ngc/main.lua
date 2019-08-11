@@ -16,6 +16,8 @@ local stun
 local momentum
 local block
 local bow
+local crossbow
+local thrown
 -- locals
 local attackBonusSpell = "ngc_ready_to_strike"
 local handToHandReferences = {}
@@ -327,7 +329,7 @@ local function onDamage(e)
             local weapon = e.attacker.readiedWeapon
             local sourceAttackBonus = sourceActor.attackBonus
 
-            if (attacker.actorType == 0 and weapon == nil) then
+            if attacker.actorType == 0 then
                 -- standard creature bonus without weapons
                 local fortifyAttackMod = 0
                 if common.config.toggleAlwaysHit then
@@ -351,7 +353,7 @@ local function onDamage(e)
                             local damageDone
 
                             if common.bonusMultiplierFromAttackEvent[source.id] then
-                                damageDone = (damageAdded * common.bonusMultiplierFromAttackEvent[source.id])
+                                damageDone = (damageTaken * common.bonusMultiplierFromAttackEvent[source.id])
                                 damageAdded = damageAdded + damageDone
                                 common.bonusMultiplierFromAttackEvent[source.id] = nil
                                 if common.config.showDamageNumbers then
@@ -363,12 +365,33 @@ local function onDamage(e)
                             -- NPC bow hits
                             local bonusMultiplier = bow.NPCFullDrawBonus(weaponSkill)
                             if bonusMultiplier then
-                                damageAdded = damageAdded + (damageAdded * bonusMultiplier)
+                                damageAdded = damageAdded + (damageTaken * bonusMultiplier)
                             end
                         end
 
                         -- hamstring chance
                         bow.performHamstring(weaponSkill, source, target)
+                    elseif weapon.object.type == 10 then
+                        -- crossbow hits
+                        local distance = source.position:distance(target.position)
+                        local damageDone = crossbow.criticalRangeDamage(damageTaken, distance, weaponSkill)
+                        if damageDone ~= nil then
+                            if (source == tes3.player and common.config.showDamageNumbers) then
+                                damageMessage("Critical Damage!", damageDone)
+                            end
+                            damageAdded = damageAdded + damageDone
+                        end
+                    elseif weapon.object.type == 11 then
+                        -- thrown weapon hits
+                        local damageDone = thrown.agilityBonusMod(damageTaken, sourceActor.agility.current)
+                        damageAdded = damageAdded + damageDone
+                        local damageCrit = thrown.performCritical(damageTaken, weaponSkill)
+                        if damageCrit ~= nil then
+                            if (source == tes3.player and common.config.showDamageNumbers) then
+                                damageMessage("Critical strike!", damageCrit)
+                            end
+                            damageAdded = damageAdded + damageCrit
+                        end
                     end
                 elseif weapon.object.type > 6 then
                     -- axe
@@ -651,30 +674,47 @@ local function onAttack(e)
         end
     end
 
-    --[[
-        Bow block
-    ]]--
-    if (weapon and weapon.object.type == 9 and source == tes3.player and common.config.toggleWeaponPerks) then
-        local weaponSkill = sourceActor.marksman.current
-        local bonusMultiplier
+    if (weapon and common.config.toggleWeaponPerks) then
+        --[[
+            Bow block
+        ]]--
+        if (weapon.object.type == 9 and source == tes3.player) then
+            local weaponSkill = sourceActor.marksman.current
+            local bonusMultiplier
 
-        if common.playerCurrentlyFullDrawn then
-            bonusMultiplier = bow.playerFullDrawBonus(weaponSkill)
+            if bow.playerCurrentlyFullDrawn then
+                bonusMultiplier = bow.playerFullDrawBonus(weaponSkill)
+            end
+
+            if bonusMultiplier then
+                common.bonusMultiplierFromAttackEvent[source.id] = bonusMultiplier
+            else
+                common.bonusMultiplierFromAttackEvent[source.id] = nil
+            end
         end
 
-        if bonusMultiplier then
-            common.bonusMultiplierFromAttackEvent[source.id] = bonusMultiplier
-        else
-            common.bonusMultiplierFromAttackEvent[source.id] = nil
+        --[[
+            Thrown weapon block
+        ]]--
+        if (weapon.object.type == 11 and source == tes3.player) then
+            local weaponSkill = sourceActor.marksman.current
+            -- thrown chance GMST
+            local thrownChanceGMST = tes3.findGMST("fProjectileThrownStoreChance")
+            thrownChanceGMST.value = thrown.getThrownRecoverChance(weaponSkill)
         end
     end
 end
 
+-- currently only used for hamstring debuff
 local function onCalcMoveSpeed(e)
     local source = e.reference
 
     if (common.currentlyHamstrung[source.id]) then
         e.speed = e.speed * common.config.hamstringModifier
+    end
+
+    if (bow.playerCurrentlyFullDrawn and source == tes3.player and e.mobile.isMovingBack) then
+        e.speed = e.speed * common.config.fullDrawBackSpeedModifier
     end
 end
 
@@ -733,6 +773,8 @@ local function initialized(e)
         momentum = require("ngc.perks.momentum")
         block = require("ngc.block")
         bow = require("ngc.perks.bow")
+        crossbow = require("ngc.perks.crossbow")
+        thrown = require("ngc.perks.thrown")
 
         -- register events
         event.register("loaded", onLoaded)
@@ -756,11 +798,26 @@ local function initialized(e)
             end
         end
         if common.config.toggleWeaponPerks then
+            -- bow
             mge.enableZoom()
-            event.register("mouseButtonDown", bow.attackPressed, { filter = 0 })
-            event.register("mouseButtonUp", bow.attackReleased, { filter = 0 } )
+            if common.config.nonStandardAttackKey.keyCode then
+                event.register("keyDown", bow.attackPressed, { filter = common.config.nonStandardAttackKey.keyCode } )
+                event.register("keyUp", bow.attackReleased, { filter = common.config.nonStandardAttackKey.keyCode } )
+            else
+                event.register("mouseButtonDown", bow.attackPressed, { filter = 0 } )
+                event.register("mouseButtonUp", bow.attackReleased, { filter = 0 } )
+            end
             event.register("menuEnter", bow.attackReleased)
             event.register("calcMoveSpeed", onCalcMoveSpeed)
+            -- crossbow
+            if common.config.nonStandardAttackKey.keyCode then
+                event.register("keyDown", crossbow.attackPressed, { filter = common.config.nonStandardAttackKey.keyCode } )
+                event.register("keyUp", crossbow.attackReleased, { filter = common.config.nonStandardAttackKey.keyCode } )
+            else
+                event.register("mouseButtonDown", crossbow.attackPressed, { filter = 0 })
+                event.register("mouseButtonUp", crossbow.attackReleased, { filter = 0 } )
+            end
+            event.register("menuEnter", crossbow.attackReleased)
         end
 
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)

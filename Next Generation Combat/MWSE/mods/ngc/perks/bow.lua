@@ -1,9 +1,63 @@
-local this = {}
+local this = {
+    playerCurrentlyFullDrawn = false,
+    playerFullDrawTimer = nil,
+    fullDrawDrainFatigueTimer = nil,
+}
 
 local common = require("ngc.common")
 
-function this.attackPressed(e)
+local function denockArrow()
+    tes3.addItem({ reference = tes3.player, item = "chitin arrow", count = 1 })
+    mwscript.equip({ reference = tes3.player, item = "chitin arrow" })
+    tes3.removeItem({ reference = tes3.player, item = "chitin arrow", count = 1 })
+end
 
+local function cancelFullDraw()
+    if this.fullDrawDrainFatigueTimer then
+        this.fullDrawDrainFatigueTimer:cancel()
+        this.fullDrawDrainFatigueTimer = nil
+    end
+end
+
+local function doFullDraw(player)
+    this.playerCurrentlyFullDrawn = true
+    if player.isSneaking then
+        mge.setZoom({ amount = common.config.bowZoomLevel })
+    end
+    if common.config.showMessages then
+        tes3.messageBox({ message = "Full draw!" })
+    end
+
+    local maxFatigue = tes3.mobilePlayer.fatigue.base
+    local fatigueLossPerTick = maxFatigue * common.config.fullDrawFatigueDrainPercent
+    local fatigueMin = maxFatigue * common.config.fullDrawFatigueMin
+    local fatigueLossIterations = maxFatigue / fatigueLossPerTick
+    if this.fullDrawDrainFatigueTimer and this.fullDrawDrainFatigueTimer.state ~= timer.expired then
+        -- we shouldn't have a timer on guard up, so it hasn't been cancelled/cleared properly
+        this.fullDrawDrainFatigueTimer:cancel()
+        this.fullDrawDrainFatigueTimer = nil
+    end
+    this.fullDrawDrainFatigueTimer = timer.start({
+        duration = 1,
+        callback = function ()
+            local currentFatigue = tes3.mobilePlayer.fatigue.current
+            if currentFatigue < fatigueMin then
+                -- turn off blocking and timer
+                this.playerCurrentlyFullDrawn = false
+                cancelFullDraw()
+                denockArrow()
+            else
+                if common.config.showDebugMessages then
+                    tes3.messageBox({ message = "Fatigue drain: " .. fatigueLossPerTick })
+                end
+                tes3.mobilePlayer.fatigue.current = currentFatigue - fatigueLossPerTick
+            end
+        end,
+        iterations = fatigueLossIterations * 10 -- lets give it enough iterations to make sure it will drain fatigue 10 times over
+    })
+end
+
+function this.attackPressed(e)
     if tes3.menuMode() then
         return
     end
@@ -11,21 +65,15 @@ function this.attackPressed(e)
     local player = tes3.mobilePlayer
     local weapon = player.readiedWeapon
 
-    if (weapon.object.type == 9 and player.actionData.attackSwing > 0) then
+    if (weapon and weapon.object.type == 9 and player.actionData.attackSwing > 0) then
         -- only for bows during an attack
         if common.config.showDebugMessages then
             tes3.messageBox({ message = "Start full draw!" })
         end
-        common.playerFullDrawTimer = timer.start({
+        this.playerFullDrawTimer = timer.start({
             duration = 3,
             callback = function ()
-                common.playerCurrentlyFullDrawn = true
-                if player.isSneaking then
-                    mge.setZoom({ amount = common.config.bowZoomLevel })
-                end
-                if common.config.showMessages then
-                    tes3.messageBox({ message = "Full draw!" })
-                end
+                doFullDraw(player)
             end,
             iterations = 1
         })
@@ -33,18 +81,19 @@ function this.attackPressed(e)
 end
 
 function this.attackReleased(e)
+    cancelFullDraw()
     -- we delay this a bit so the attack event has time to track it
     timer.start({
         duration = 1,
         callback = function ()
-            common.playerCurrentlyFullDrawn = false
+            this.playerCurrentlyFullDrawn = false
         end,
         iterations = 1
     })
     mge.setZoom({ amount = 0 })
-    if common.playerFullDrawTimer then
-        common.playerFullDrawTimer:cancel()
-        common.playerFullDrawTimer = nil
+    if this.playerFullDrawTimer then
+        this.playerFullDrawTimer:cancel()
+        this.playerFullDrawTimer = nil
     end
 end
 

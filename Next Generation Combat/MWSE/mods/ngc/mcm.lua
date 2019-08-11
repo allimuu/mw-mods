@@ -53,6 +53,18 @@ local function createBlockCategory(page)
             numbersOnly = true
         },
     }
+
+    -- Create option to capture hotkey.
+    category:createKeyBinder{
+        label = "Assign key for Non Standard Attack Key",
+        description = "If you do not use the standard attack key (Left Mouse click) then you have to set this or some events wont work. Click on the option and follow the prompt.",
+        allowCombinations = true,
+        variable = mwse.mcm.createTableVariable{
+            id = "nonStandardAttackKey",
+            table = common.config,
+            restartRequired = true
+        }
+    }
 end
 
 local function createFeatureCategory(page)
@@ -275,6 +287,36 @@ local function createBaseWeaponPerkSettings(page)
     }
 
     category:createTextField{
+        label = "Full draw fatigue drain percent",
+        description = "Full draw fatigue drain percent per second. Default: 0.1 or 10%",
+        variable = mwse.mcm.createTableVariable{
+            id = "fullDrawFatigueDrainPercent",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Full draw fatigue drain min",
+        description = "Full draw fatigue drain minimum percent. Default: 0.2 or 20%",
+        variable = mwse.mcm.createTableVariable{
+            id = "fullDrawFatigueMin",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Full draw back speed",
+        description = "Movement speed modifier while moving backwards in full draw. Default: 0.3 or 30%",
+        variable = mwse.mcm.createTableVariable{
+            id = "fullDrawBackSpeedModifier",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
         label = "Hamstring modifier",
         description = "The amount hamstring will slow someone down. Default: 0.5 or 50% of normal",
         variable = mwse.mcm.createTableVariable{
@@ -289,6 +331,26 @@ local function createBaseWeaponPerkSettings(page)
         description = "Bow zoom level when sneaking and reaching full draw. Default: 2",
         variable = mwse.mcm.createTableVariable{
             id = "bowZoomLevel",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Crossbow critical range",
+        description = "Distance the enemy has to be to do critical damage with crossbow. Default: 800",
+        variable = mwse.mcm.createTableVariable{
+            id = "crossbowCriticalRange",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Thrown agility modifier",
+        description = "Thrown weapon damage modifier from agility. Default: 0.5 or 0.5% per point of agility",
+        variable = mwse.mcm.createTableVariable{
+            id = "thrownAgilityModifier",
             table = common.config,
             numbersOnly = true
         },
@@ -414,7 +476,7 @@ local function createGMSTSettings(page)
 
     category:createTextField{
         label = "Projectile min speed (fProjectileMinSpeed)",
-        description = "GMST for min speed of projectiles (arrow/bolt). Default: 960. Vanilla: 400",
+        description = "GMST for min speed of projectiles (arrow/bolt). Default: 560. Vanilla: 400",
         variable = mwse.mcm.createTableVariable{
             id = "projectileMinSpeed",
             table = common.config.gmst,
@@ -424,7 +486,7 @@ local function createGMSTSettings(page)
 
     category:createTextField{
         label = "Projectile max speed (fProjectileMaxSpeed)",
-        description = "GMST for max speed of projectiles (arrow/bolt). Default: 7200. Vanilla: 3000",
+        description = "GMST for max speed of projectiles (arrow/bolt). Default: 4000. Vanilla: 3000",
         variable = mwse.mcm.createTableVariable{
             id = "projectileMaxSpeed",
             table = common.config.gmst,
@@ -677,6 +739,58 @@ local function createWeaponPerkSettings(page, weaponTier)
         }
     end
 
+    local crossbow = page:createCategory{
+        label = "Crossbow"
+    }
+
+    crossbow:createTextField{
+        label = "Critical damage multiplier",
+        description = "Damage multiplier for when you are in critical range (see general perk settings).",
+        variable = mwse.mcm.createTableVariable{
+            id = "crossbowCriticalDamageMultiplier",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        crossbow:createTextField{
+            label = "Repeater chance",
+            description = "Chance on fire to get an instant reload on next shot.",
+            variable = mwse.mcm.createTableVariable{
+                id = "repeaterChance",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
+    local thrown = page:createCategory{
+        label = "Thrown Weapon"
+    }
+
+    thrown:createTextField{
+        label = "Critical strike chance (thrown)",
+        description = "Critical strike chance for thrown weapons.",
+        variable = mwse.mcm.createTableVariable{
+            id = "thrownCriticalStrikeChance",
+            table = common.config[weaponTier],
+            numbersOnly = true
+        },
+    }
+
+    if weaponTier ~= "weaponTier1" then
+        thrown:createTextField{
+            label = "Chance to recover (thrown)",
+            description = "Chance to recover projectile on hit for thrown eapons.",
+            variable = mwse.mcm.createTableVariable{
+                id = "thrownChanceToRecover",
+                table = common.config[weaponTier],
+                numbersOnly = true
+            },
+        }
+    end
+
     local block = page:createCategory{
         label = "Block"
     }
@@ -706,12 +820,38 @@ local function createWeaponPerkSettings(page, weaponTier)
     }
 end
 
+local function isTable(t)
+    return type(t) == "table"
+end
+
+local function isString(t)
+    return type(t) == "string"
+end
+
+local function cleanUpConfig()
+    for k, v in pairs(common.config) do
+        if not isTable(v) then
+            if isString(v) then
+                common.config[k] = tonumber(v)
+            end
+        else
+            for nestedK, nestedV in pairs(common.config[k]) do
+                if isString(nestedV) then
+                    common.config[k][nestedK] = tonumber(nestedV)
+                end
+            end
+        end
+    end
+end
 
 -- Handle mod config menu.
 function this.registerModConfig()
     mwse.log("Registering MCM")
     local template = mwse.mcm.createTemplate("Next Generation Combat")
-    template:saveOnClose("ngc", common.config)
+    template.onClose = function()
+        cleanUpConfig()
+        mwse.saveConfig("ngc", common.config)
+    end
 
     --[[
         General settings

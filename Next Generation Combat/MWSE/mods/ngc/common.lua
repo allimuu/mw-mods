@@ -5,8 +5,6 @@ local this = {
     currentArmorCache = {},
     multistrikeCounters = {},
     currentlyRushed = {},
-    playerCurrentlyFullDrawn = false,
-    playerFullDrawTimer = nil,
     bonusMultiplierFromAttackEvent = {},
     currentlyHamstrung = {},
 }
@@ -42,11 +40,19 @@ local defaultConfig = {
     executeThreshold = 0.25,
     bowZoomLevel = 2,
     hamstringModifier = 0.5,
+    fullDrawFatigueDrainPercent = 0.05,
+    fullDrawFatigueMin = 0.20,
+    fullDrawBackSpeedModifier = 0.3,
+    crossbowCriticalRange = 800,
+    thrownAgilityModifier = 0.5,
     activeBlockKey = {
         keyCode = 44,
         isShiftDown = false,
         isAltDown = false,
         isControlDown = false,
+    },
+    nonStandardAttackKey = {
+        keyCode = nil,
     },
     gmst = {
         knockdownMult = 0.8,
@@ -54,8 +60,8 @@ local defaultConfig = {
         fatigueAttackMult = 0.2,
         fatigueAttackBase = 3,
         weaponFatigueMult = 0.5,
-        projectileMaxSpeed = 7200,
-        projectileMinSpeed = 960,
+        projectileMaxSpeed = 4000,
+        projectileMinSpeed = 560,
         thrownWeaponMaxSpeed = 1200,
         thrownWeaponMinSpeed = 360,
     },
@@ -74,6 +80,8 @@ local defaultConfig = {
         weaponSkillGainModifier = 0.65,
         bowFullDrawMultiplier = 0.25,
         bowNPCDrawMultiplier = 0.1,
+        crossbowCriticalDamageMultiplier = 0.1,
+        thrownCriticalStrikeChance = 10,
     },
     weaponTier2 = {
         weaponSkillMin = 50,
@@ -96,6 +104,10 @@ local defaultConfig = {
         bowFullDrawMultiplier = 0.50,
         bowNPCDrawMultiplier = 0.17,
         hamstringChance = 10,
+        repeaterChance = 20,
+        crossbowCriticalDamageMultiplier = 0.15,
+        thrownCriticalStrikeChance = 20,
+        thrownChanceToRecover = 50,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -118,6 +130,10 @@ local defaultConfig = {
         bowFullDrawMultiplier = 0.75,
         bowNPCDrawMultiplier = 0.25,
         hamstringChance = 15,
+        repeaterChance = 35,
+        crossbowCriticalDamageMultiplier = 0.20,
+        thrownCriticalStrikeChance = 35,
+        thrownChanceToRecover = 75,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -140,6 +156,10 @@ local defaultConfig = {
         bowFullDrawMultiplier = 1,
         bowNPCDrawMultiplier = 0.33,
         hamstringChance = 20,
+        repeaterChance = 50,
+        crossbowCriticalDamageMultiplier = 0.25,
+        thrownCriticalStrikeChance = 50,
+        thrownChanceToRecover = 100,
     },
 }
 
