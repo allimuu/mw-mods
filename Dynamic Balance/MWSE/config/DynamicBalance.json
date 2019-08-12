@@ -1,0 +1,22 @@
+{
+    "idOverrides": {
+        "steel axe": {
+            "type": "static",
+            "speed": 5
+        }
+    },
+    "weaponModifiers": {
+        "Short Blade One Hand": {
+            "weight": {
+                "mod": 50,
+                "max": 500
+            }
+        },
+        "Marksman Crossbow": {
+            "value": {
+                "mod": 0.1,
+                "min": 50
+            }
+        }
+    },
+}
