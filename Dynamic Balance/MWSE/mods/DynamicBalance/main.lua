@@ -25,11 +25,11 @@ local weightClassMapping = {
     
 
 local function loadConfig()
-	local configJson = mwse.loadConfig("DynamicBalance")
-	if not configJson then
+    local configJson = mwse.loadConfig("DynamicBalance")
+    if not configJson then
         mwse.log("[Dynamic Balance] Error! Missing balance config!")
         return
-	end
+    end
 
     mwse.log("[Dynamic Balance] Initialized!")
     return configJson
@@ -58,15 +58,10 @@ local function staticUpdate(weapon, values)
     end
 end
 
-local function initialized(e)
-    config = loadConfig()
-    if not config then
-        return
-    end
-
+local function updateWeapons(moduleConfig)
     for weapon in tes3.iterateObjects(tes3.objectType.weapon) do
         -- ID overrides
-        if config.idOverrides[weapon.id] then
+        if moduleConfig.idOverrides[weapon.id] then
             local weaponConfig = config.idOverrides[weapon.id]
             if weaponConfig.type == "static" then
                 -- static values
@@ -76,13 +71,27 @@ local function initialized(e)
             end
         end
         -- Weapon modifiers
-        if config.weaponModifiers then
+        if moduleConfig.weaponModifiers then
             local weaponType = weaponTypeMapping[weapon.type]
             if config.weaponModifiers[weaponType] then
                 local weaponConfig = config.weaponModifiers[weaponType]
                 dynamicUpdate(weapon, weaponConfig)
             end
         end
+    end
+end
+
+local function initialized(e)
+    config = loadConfig()
+    if not config.modules then
+        return
+    end
+
+    for _, module in ipairs(config.modules) do
+	local module = require("DynamicBalance.modules." .. module)
+	if module then
+	    updateWeapons(module)
+	end
     end
 end
 event.register("initialized", initialized)
