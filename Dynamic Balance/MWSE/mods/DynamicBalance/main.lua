@@ -17,6 +17,13 @@ local weaponTypeMapping = {
     [13] = "Bolt",
 }
 
+local weightClassMapping = {
+    [0] = "Light",
+    [1] = "Medium",
+    [2] = "Heavy",
+}
+    
+
 local function loadConfig()
 	local configJson = mwse.loadConfig("DynamicBalance")
 	if not configJson then
