@@ -1,3 +1,20 @@
 {
-    "modules": ["weaponOverhaul"]
+    "modules": ["weaponOverhaul"],
+    "materialClassMapping" : {
+        "excludeMesh": ["art", "6th_hammer", "nerevarblade", "pickaxe", "almalexia", "magnus", "hircine", "stendarshammer", "bipolar", "icemspear"],
+        "excludeId": ["ebony_staff_trebonius", "steel spear snow prince", "steelstaffancestors_ttsa"],
+        "chitin": ["chitin"],
+        "iron": ["iron"],
+        "huntsman": ["huntsman"],
+        "nordic": ["nordic"],
+        "nordicSilver": ["nord"],
+        "dwemer": ["dwemer"],
+        "glass": ["glass"],
+        "ebony": ["ebony"],
+        "adamantium": ["adamnantium"],
+        "daedric": ["daedric"],
+        "orcish": ["orcish"],
+        "stalhrim": ["ice"]
+    },
+    "debug": true
 }
