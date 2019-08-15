@@ -1,13 +1,14 @@
 {
-  "healthPercentPerTick":0.1,
+  "allowAlways":false,
+  "durationHealthTick":3,
   "weakenedInjuryChanceBonus":5,
-  "disableInCombat":true,
-  "restingHoursRequired":8,
+  "combatDuration":15,
   "minHealthMod":0.5,
+  "restingHoursRequired":8,
+  "healthPercentPerTick":0.1,
   "showInjuryMessages":true,
-  "debug":false,
   "baseInjuryChance":5,
   "enableInjuries":true,
   "minFatigueMod":0.5,
-  "durationHealthTick":3
+  "debug":false
 }

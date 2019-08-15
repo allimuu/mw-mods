@@ -30,10 +30,10 @@ local function createGeneralSettings(page)
     }
 
     category:createOnOffButton{
-        label = "Disable healing in combat",
-        description = "Default: On. Disables healing in combat.",
+        label = "Allow healing always",
+        description = "Default: Off. Allows healing regardless of combat status.",
         variable = mwse.mcm.createTableVariable{
-            id = "disableInCombat",
+            id = "allowAlways",
             table = this.config
         }
     }
@@ -54,6 +54,16 @@ local function createGeneralSettings(page)
             id = "showInjuryMessages",
             table = this.config
         }
+    }
+
+    category:createTextField{
+        label = "Out of Combat duration",
+        description = "Default: 15 seconds. The amount of time since you have been hit to count as out of combat.",
+        variable = mwse.mcm.createTableVariable{
+            id = "combatDuration",
+            table = this.config,
+            numbersOnly = true
+        },
     }
 
     category:createTextField{

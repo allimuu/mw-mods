@@ -1,10 +1,11 @@
 local config = mwse.loadConfig("Realistic Healing and Injuries")
 if (config == nil) then
 	config = {
+        combatDuration = 15,
         healthPercentPerTick = 0.1,
         minFatigueMod = 0.50,
         minHealthMod = 0.50,
-        disableInCombat = true,
+        allowAlways = false,
         enableInjuries = true,
         restingHoursRequired = 8,
         durationHealthTick = 3,
@@ -27,6 +28,8 @@ local injuries = {
     [3] = "rhai_arm_injury",
     [4] = "rhai_leg_injury",
 }
+local playerRecentlyInCombat = false
+local playerCombatTimer
 
 local function healthTick(e)
     if nextTimestamp == nil then
@@ -35,7 +38,8 @@ local function healthTick(e)
     end
 
     if e.timestamp > nextTimestamp then
-        if config.disableInCombat and tes3.mobilePlayer.inCombat then
+        if not config.allowAlways and playerRecentlyInCombat then
+            nextTimestamp = e.timestamp + timestampOffset
             return
         end
         local maxHealth = tes3.mobilePlayer.health.base
@@ -103,6 +107,22 @@ end
 local function calcInjury(e)
     local defender = e.mobile
     local defenderRef = e.reference
+
+    if not config.allowAlways then
+        -- we've been hit, so player is in combat
+        playerRecentlyInCombat = true
+        if playerCombatTimer then
+            playerCombatTimer:cancel()
+            playerCombatTimer = nil
+        end
+        playerCombatTimer = timer.start({
+            duration = config.combatDuration,
+            callback = function()
+                playerCombatTimer = nil
+                playerRecentlyInCombat = false
+            end,
+        })
+    end
 
     -- only ignore magic
     if e.source ~= "magic" then
