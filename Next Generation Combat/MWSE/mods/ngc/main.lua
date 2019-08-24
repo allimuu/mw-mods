@@ -461,6 +461,9 @@ local function onDamage(e)
                                 damageMessage("", damageDone)
                             end
                             damageAdded = damageAdded + damageDone
+                            -- cancel timer after adding damage
+                            longblade.riposteTimers[source.id]:cancel()
+                            longblade.riposteTimers[source.id] = nil
                         end
                     end
                 elseif weapon.object.type > -1 then
@@ -735,12 +738,42 @@ end
 local function onCalcMoveSpeed(e)
     local source = e.reference
 
-    if (common.currentlyHamstrung[source.id]) then
-        e.speed = e.speed * common.config.hamstringModifier
+    --[[
+        Armor perks
+    ]]--
+    if common.config.toggleArmorPerks then
+        if source == tes3.player then
+            if armor.playerArmorClass == "light" and
+            tes3.mobilePlayer.lightArmor.current >= common.config.armorPerks.journeymanSkillMin then
+                if e.mobile.isSneaking or e.mobile.inCombat then
+                    e.speed = e.speed * (1 + common.config.armorPerks.lightArmorSpeedBonus)
+                end
+            end
+        else
+            if armor.npcArmorClasses[source.id] then
+                if armor.npcArmorClasses[source.id] == "light" then
+                    local armorSkill = e.mobile.lightArmor.current
+                    if armorSkill and armorSkill >= common.config.armorPerks.journeymanSkillMin then
+                        if e.mobile.isSneaking or e.mobile.inCombat then
+                            e.speed = e.speed * (1 + common.config.armorPerks.lightArmorSpeedBonus)
+                        end
+                    end
+                end
+            end
+        end
     end
 
-    if (bow.playerCurrentlyFullDrawn and source == tes3.player and e.mobile.isMovingBack) then
-        e.speed = e.speed * common.config.fullDrawBackSpeedModifier
+    --[[
+        Weapon perks
+    ]]--
+    if common.config.toggleWeaponPerks then
+        if (common.currentlyHamstrung[source.id]) then
+            e.speed = e.speed * common.config.hamstringModifier
+        end
+
+        if (bow.playerCurrentlyFullDrawn and source == tes3.player and e.mobile.isMovingBack) then
+            e.speed = e.speed * common.config.fullDrawBackSpeedModifier
+        end
     end
 end
 
@@ -794,6 +827,7 @@ local function initialized(e)
         event.register("combatStopped", onCombatEnd)
         event.register("attack", onAttack)
         event.register("damage", onDamage)
+        event.register("calcMoveSpeed", onCalcMoveSpeed)
         if common.config.toggleSkillGain then
             event.register("exerciseSkill", onExerciseSkill)
         end
@@ -821,7 +855,6 @@ local function initialized(e)
                 event.register("mouseButtonUp", bow.attackReleased, { filter = 0 } )
             end
             event.register("menuEnter", bow.attackReleased)
-            event.register("calcMoveSpeed", onCalcMoveSpeed)
             -- crossbow
             if common.config.nonStandardAttackKey.keyCode then
                 event.register("keyDown", crossbow.attackPressed, { filter = common.config.nonStandardAttackKey.keyCode } )

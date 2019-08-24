@@ -189,6 +189,7 @@ local defaultConfig = {
         masterSkillMin = 100,
         armorMinPieces = 7,
         unarmoredShieldBonusMod = 0.25,
+        lightArmorSpeedBonus = 0.15,
     }
 }
 
