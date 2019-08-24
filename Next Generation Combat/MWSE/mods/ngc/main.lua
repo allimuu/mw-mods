@@ -9,15 +9,17 @@ common.loadConfig()
 local mcm = require("ngc.mcm")
 event.register("modConfigReady", mcm.registerModConfig)
 -- weapon modules
-local multistrike
+local longblade
 local critical
 local bleed
 local stun
 local momentum
-local block
 local bow
 local crossbow
 local thrown
+-- other moduels
+local block
+local armor
 -- locals
 local attackBonusSpell = "ngc_ready_to_strike"
 local handToHandReferences = {}
@@ -443,12 +445,20 @@ local function onDamage(e)
                     damageAdded = coreBonusDamage(damageTaken, weaponSkill, sourceAttackBonus)
 
                     if common.config.toggleWeaponPerks then
-                        common.multistrikeCounters = multistrike.checkCounters(source.id)
+                        common.multistrikeCounters = longblade.checkCounters(source.id)
                         if common.multistrikeCounters[source.id] == 3 then
-                            local damageDone = multistrike.perform(damageTaken, source, weaponSkill)
+                            local damageDone = longblade.perform(damageTaken, source, weaponSkill)
                             common.multistrikeCounters[source.id] = 0
                             if source == tes3.player then
                                 damageMessage("Multistrike!", damageDone)
+                            end
+                            damageAdded = damageAdded + damageDone
+                        end
+
+                        if longblade.riposteTimers[source.id] then
+                            local damageDone = damageTaken * common.config.riposteDamageMultiplier
+                            if (source == tes3.player and common.config.showDamageNumbers) then
+                                damageMessage("", damageDone)
                             end
                             damageAdded = damageAdded + damageDone
                         end
@@ -475,7 +485,23 @@ local function onDamage(e)
                 end
             end
         end
+
+        --[[
+            Defender damage events
+        ]]--
+        if defender then
+            local defenderWeapon = defender.readiedWeapon
+
+            if defenderWeapon then
+                if defenderWeapon.object.type == 1 or defenderWeapon.object.type == 2 then
+                    local weaponSkill = targetActor.longBlade.current
+
+                    longblade.rollForRiposte(target, weaponSkill)
+                end
+            end
+        end
     end
+
 
     --[[
         Hand to hand block
@@ -719,24 +745,9 @@ local function onCalcMoveSpeed(e)
 end
 
 local function onExerciseSkill(e)
-    local weaponSkills = {
-        [0] = true, -- block
-        [4] = true, -- blunt
-        [5] = true, -- long blade
-        [6] = true, -- axe
-        [7] = true, -- spear
-        [22] = true, -- short blade
-        [26] = true, -- hand to hand
-    }
-    local armorSkills = {
-        [2] = true, -- medium armor
-        [3] = true, -- heavy armor
-        [17] = true, -- unarmored
-        [21] = true, -- light armor
-    }
     local modifier
 
-    if weaponSkills[e.skill] then
+    if common.weaponSkills[e.skill] then
         -- this is a weapon skill
         local weaponSkillLevel = tes3.mobilePlayer.skills[e.skill+1].base
         modifier = common.config.weaponSkillGainBaseModifier
@@ -751,7 +762,7 @@ local function onExerciseSkill(e)
         end
     end
 
-    if armorSkills[e.skill] then
+    if common.armorSkills[e.skill] then
         modifier = common.config.armorSkillGainBaseModifier
     end
 
@@ -766,7 +777,7 @@ end
 local function initialized(e)
 	if tes3.isModActive("Next Generation Combat.esp") then
         -- load modules
-        multistrike = require("ngc.perks.multistrike")
+        longblade = require("ngc.perks.longblade")
         critical = require("ngc.perks.critical")
         bleed = require("ngc.perks.bleed")
         stun = require("ngc.perks.stun")
@@ -775,6 +786,7 @@ local function initialized(e)
         bow = require("ngc.perks.bow")
         crossbow = require("ngc.perks.crossbow")
         thrown = require("ngc.perks.thrown")
+        armor = require("ngc.armor")
 
         -- register events
         event.register("loaded", onLoaded)
@@ -797,6 +809,7 @@ local function initialized(e)
                 event.register("mouseButtonUp", block.keyReleased, { filter = 1 } )
             end
         end
+        -- weapon perks
         if common.config.toggleWeaponPerks then
             -- bow
             mge.enableZoom()
@@ -819,7 +832,14 @@ local function initialized(e)
             end
             event.register("menuEnter", crossbow.attackReleased)
         end
-
+        -- armor perks
+        if common.config.toggleArmorPerks then
+            event.register("simulate", armor.simulate)
+            event.register("equipped", armor.determinePlayerArmorClass)
+            event.register("unequipped", armor.determinePlayerArmorClass)
+            event.register("spellTick", armor.unarmoredShieldBonusCalc)
+            event.register("mobileActivated", armor.determineNPCArmorClasses)
+        end
 		mwse.log("[Next Generation Combat] Initialized version v%d", version)
 	end
 end

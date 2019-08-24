@@ -83,6 +83,16 @@ local function createFeatureCategory(page)
     }
 
     category:createOnOffButton{
+        label = "Toggle Armor Perks",
+        description = "Use this to turn on/off the armor perks.",
+        variable = mwse.mcm.createTableVariable{
+            id = "toggleArmorPerks",
+            table = common.config,
+            restartRequired = true
+        }
+    }
+
+    category:createOnOffButton{
         label = "Toggle Always Hit",
         description = "Use this to turn on/off always hit feature. This reverts Blind, Sanctuary and Attack Bonus to vanilla functionality.",
         variable = mwse.mcm.createTableVariable{
@@ -355,6 +365,92 @@ local function createBaseWeaponPerkSettings(page)
             numbersOnly = true
         },
     }
+
+    category:createTextField{
+        label = "Riposte damage multiplier",
+        description = "Bonus damage on a riposte counter attack. Default: 0.5 or 50%",
+        variable = mwse.mcm.createTableVariable{
+            id = "riposteDamageMultiplier",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Riposte duration",
+        description = "Duration to perform a riposte counter attack in seconds. Default: 2",
+        variable = mwse.mcm.createTableVariable{
+            id = "riposteDuration",
+            table = common.config,
+            numbersOnly = true
+        },
+    }
+end
+
+local function createBaseArmorPerkSettings(page)
+    local category = page:createCategory{
+        label = "Base Armor Perk Settings"
+    }
+
+    category:createTextField{
+        label = "Apprentice armor skill (min)",
+        description = "The armor skill required for apprentice perks (minimum). Default: 25",
+        variable = mwse.mcm.createTableVariable{
+            id = "apprenticeSkillMin",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Journeyman armor skill (min)",
+        description = "The armor skill required for journeyman perks (minimum). Default: 50",
+        variable = mwse.mcm.createTableVariable{
+            id = "journeymanSkillMin",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Expert armor skill (min)",
+        description = "The armor skill required for expert perks (minimum). Default: 75",
+        variable = mwse.mcm.createTableVariable{
+            id = "expertSkillMin",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Master armor skill (min)",
+        description = "The armor skill required for master perks (minimum). Default: 100",
+        variable = mwse.mcm.createTableVariable{
+            id = "masterSkillMin",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Minimum armor pieces",
+        description = "Minimum amount of armor pieces to qualify for perks. Default: 7",
+        variable = mwse.mcm.createTableVariable{
+            id = "armorMinPieces",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Unarmored shield bonus modifier (journeyman)",
+        description = "The shield bonus modifier when unarmored (journeyman perk). Default: 0.25 or 25%",
+        variable = mwse.mcm.createTableVariable{
+            id = "unarmoredShieldBonusMod",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
 end
 
 local function createHandToHandPerkSettings(page)
@@ -571,10 +667,10 @@ local function createWeaponPerkSettings(page, weaponTier)
 
     if weaponTier ~= "weaponTier1" then
         longBlade:createTextField{
-            label = "Multistrike double strike chance",
-            description = "Chance to perform a double damage strike on a multistrike.",
+            label = "Riposte chance",
+            description = "Chance to trigger a riposte on being hit.",
             variable = mwse.mcm.createTableVariable{
-                id = "multistrikeBonusChance",
+                id = "riposteChance",
                 table = common.config[weaponTier],
                 numbersOnly = true
             },
@@ -869,6 +965,12 @@ function this.registerModConfig()
     createHandToHandPerkSettings(page)
     createSkillGainSettings(page)
     createGMSTSettings(page)
+
+    local armorPerksPage = template:createSideBarPage{
+        label = "Armor Perks",
+        description = "All armor perk settings"
+    }
+    createBaseArmorPerkSettings(armorPerksPage)
 
     --[[
         Weapon tier settings

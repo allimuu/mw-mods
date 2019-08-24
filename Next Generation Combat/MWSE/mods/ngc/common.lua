@@ -7,6 +7,21 @@ local this = {
     currentlyRushed = {},
     bonusMultiplierFromAttackEvent = {},
     currentlyHamstrung = {},
+    weaponSkills = {
+        [0] = true, -- block
+        [4] = true, -- blunt
+        [5] = true, -- long blade
+        [6] = true, -- axe
+        [7] = true, -- spear
+        [22] = true, -- short blade
+        [26] = true, -- hand to hand
+    },
+    armorSkills = {
+        [2] = true, -- medium armor
+        [3] = true, -- heavy armor
+        [17] = true, -- unarmored
+        [21] = true, -- light armor
+    }
 }
 local defaultConfig = {
     showMessages = true,
@@ -20,6 +35,7 @@ local defaultConfig = {
     toggleHandToHandPerks = true,
     toggleSkillGain = true,
     toggleBalanceGMSTs = true,
+    toggleArmorPerks = true,
     creatureBonusModifier = 0.3,
     weaponSkillModifier = 0.2,
     attackBonusModifier = 0.5,
@@ -45,6 +61,8 @@ local defaultConfig = {
     fullDrawBackSpeedModifier = 0.3,
     crossbowCriticalRange = 800,
     thrownAgilityModifier = 0.5,
+    riposteDamageMultiplier = 0.5,
+    riposteDuration = 2,
     activeBlockKey = {
         keyCode = 44,
         isShiftDown = false,
@@ -108,6 +126,7 @@ local defaultConfig = {
         crossbowCriticalDamageMultiplier = 0.15,
         thrownCriticalStrikeChance = 20,
         thrownChanceToRecover = 50,
+        riposteChance = 10,
     },
     weaponTier3 = {
         weaponSkillMin = 75,
@@ -134,6 +153,7 @@ local defaultConfig = {
         crossbowCriticalDamageMultiplier = 0.20,
         thrownCriticalStrikeChance = 35,
         thrownChanceToRecover = 75,
+        riposteChance = 15,
     },
     weaponTier4 = {
         weaponSkillMin = 100,
@@ -160,17 +180,28 @@ local defaultConfig = {
         crossbowCriticalDamageMultiplier = 0.25,
         thrownCriticalStrikeChance = 50,
         thrownChanceToRecover = 100,
+        riposteChance = 20,
     },
+    armorPerks = {
+        apprenticeSkillMin = 25,
+        journeymanSkillMin = 50,
+        expertSkillMin = 75,
+        masterSkillMin = 100,
+        armorMinPieces = 7,
+        unarmoredShieldBonusMod = 0.25,
+    }
 }
 
 -- Loads the configuration file for use.
 function this.loadConfig()
 	this.config = defaultConfig
 
-	local configJson = mwse.loadConfig('ngc')
+	local configJson = mwse.loadConfig("ngc")
 	if (configJson ~= nil) then
 		this.config = configJson
-	end
+    else
+        mwse.saveConfig("ngc", this.config)
+    end
 
 	mwse.log("[Next Generation Combat] Loaded configuration:")
 	mwse.log(json.encode(this.config, { indent = true }))
@@ -179,7 +210,7 @@ end
 -- common util functions
 function this.getARforTarget(target)
     local totalAR = 0
-    for id, slot in pairs(tes3.armorSlot) do
+    for _, slot in pairs(tes3.armorSlot) do
         local equippedSlot = tes3.getEquippedItem({ actor = target, objectType = tes3.objectType.armor, slot = slot })
         if equippedSlot then
             totalAR = totalAR + equippedSlot.object.armorRating
