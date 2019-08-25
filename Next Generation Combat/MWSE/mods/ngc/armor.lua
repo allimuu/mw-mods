@@ -2,6 +2,7 @@ local this = {
     playerArmorClass = nil,
     npcArmorClasses = {},
     shieldBonusRefs = {},
+    sneakBootMultDefault = nil,
 }
 
 local common = require("ngc.common")
@@ -10,7 +11,7 @@ local nextTimestamp
 local timestampOffset = 3 / 100 -- every 3 seconds
 local lastPosition
 
-local function getClassOfArmor(target)
+function this.getClassOfArmor(target)
     local heavyPieces = 0
     local mediumPieces = 0
     local lightPieces = 0
@@ -28,6 +29,12 @@ local function getClassOfArmor(target)
         end
     end
 
+    -- if common.config.showArmorDebugMessages then
+    --     tes3.messageBox("Light pieces: %d", lightPieces)
+    --     tes3.messageBox("Medium pieces: %d", mediumPieces)
+    --     tes3.messageBox("Heavy pieces: %d", heavyPieces)
+    -- end
+
     if heavyPieces >= common.config.armorPerks.armorMinPieces then
         return "heavy"
     elseif mediumPieces >= common.config.armorPerks.armorMinPieces then
@@ -42,13 +49,14 @@ local function getClassOfArmor(target)
 end
 
 function this.determinePlayerArmorClass(e)
-    this.playerArmorClass = getClassOfArmor(tes3.player)
+    this.playerArmorClass = this.getClassOfArmor(tes3.player)
 end
 
 function this.determineNPCArmorClasses(e)
-    this.npcArmorClasses[e.reference.id] = getClassOfArmor(e.reference)
+    this.npcArmorClasses[e.reference.id] = this.getClassOfArmor(e.reference)
 end
 
+-- Apprentice all armor perk
 function this.simulate(e)
     if nextTimestamp == nil then
         lastPosition = tes3.mobilePlayer.position:copy()
@@ -58,10 +66,7 @@ function this.simulate(e)
     if e.timestamp > nextTimestamp then
         local distanceFromLastVector = tes3.mobilePlayer.position:distance(lastPosition)
         if (tes3.mobilePlayer.isRunning and distanceFromLastVector > 600) then
-            this.playerArmorClass = getClassOfArmor(tes3.player)
-            if common.config.showDebugMessages then
-                tes3.messageBox(this.playerArmorClass)
-            end
+            this.playerArmorClass = this.getClassOfArmor(tes3.player)
             local skillId
 
             if this.playerArmorClass == "heavy" then
@@ -87,8 +92,8 @@ function this.simulate(e)
             end
 
             if skillId then
-                tes3.mobilePlayer:exerciseSkill(skillId, 0.05)
-                if common.config.showDebugMessages then
+                tes3.mobilePlayer:exerciseSkill(skillId, common.config.armorPerks.runningArmorExp)
+                if common.config.showArmorDebugMessages then
                     tes3.messageBox("Triggering experience for: " .. this.playerArmorClass)
                 end
             end
@@ -99,20 +104,22 @@ function this.simulate(e)
     end
 end
 
+-- Journeyman unarmored perk
 local function unarmoredShieldBonus(armorSkill)
     if armorSkill >= common.config.armorPerks.journeymanSkillMin then
         return common.config.armorPerks.unarmoredShieldBonusMod
     end
 end
 
+-- Journeyman unarmored perk
 function this.unarmoredShieldBonusCalc(e)
     if e.effectId == tes3.effect.shield then
         local uid = e.sourceInstance.serialNumber
         if this.shieldBonusRefs[uid] == nil and e.effectInstance.timeActive > 0 then
             this.shieldBonusRefs[uid] = true
             if e.target == tes3.player then
-                this.playerArmorClass = getClassOfArmor(tes3.player)
-                if common.config.showDebugMessages then
+                this.playerArmorClass = this.getClassOfArmor(tes3.player)
+                if common.config.showArmorDebugMessages then
                     tes3.messageBox(this.playerArmorClass)
                 end
                 if this.playerArmorClass == "unarmored" then
@@ -123,11 +130,13 @@ function this.unarmoredShieldBonusCalc(e)
                     end
                 end
             else
-                if this.npcArmorClasses[e.target.id] then
-                    if this.npcArmorClasses[e.target.id] == "unarmored" then
-                        local armorSkill = tes3.mobilePlayer.unarmored.current
-                        if armorSkill then
-                            local unarmoredShieldMod = unarmoredShieldBonus(armorSkill)
+                if this.npcArmorClasses[e.target.id] and this.npcArmorClasses[e.target.id] == "unarmored" then
+                    local targetMobile = e.target.mobile
+
+                    if targetMobile and targetMobile.actorType ~= 0 then
+                        local armorSkillCurrent = targetMobile.unarmored.current
+                        if armorSkillCurrent then
+                            local unarmoredShieldMod = unarmoredShieldBonus(armorSkillCurrent)
                             if unarmoredShieldMod then
                                 e.effectInstance.magnitude = e.effectInstance.magnitude * (1 + unarmoredShieldMod)
                             end
@@ -141,6 +150,20 @@ function this.unarmoredShieldBonusCalc(e)
             this.shieldBonusRefs[uid] = nil
         end
     end
+end
+
+-- Journeyman heavy armor perk
+function this.deflectCheck(source)
+    local deflectChanceRoll = math.random(100)
+    if common.config.armorPerks.heavyArmorDeflectChance >= deflectChanceRoll then
+        if (common.config.showMessages and source == tes3.player) then
+            tes3.messageBox({ message = "Deflected!" })
+        end
+        -- no damage
+        return true
+    end
+
+    return false
 end
 
 return this

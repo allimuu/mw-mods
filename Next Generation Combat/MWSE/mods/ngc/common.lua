@@ -28,6 +28,7 @@ local defaultConfig = {
     showActiveBlockMessages = true,
     showDamageNumbers = false,
     showDebugMessages = false,
+    showArmorDebugMessages = false,
     showSkillGainDebugMessages = false,
     toggleAlwaysHit = true,
     toggleWeaponPerks = true,
@@ -74,7 +75,7 @@ local defaultConfig = {
     },
     gmst = {
         knockdownMult = 0.8,
-        knockdownOddsMult = 70,
+        knockdownOddsMult = 80,
         fatigueAttackMult = 0.2,
         fatigueAttackBase = 3,
         weaponFatigueMult = 0.5,
@@ -188,8 +189,11 @@ local defaultConfig = {
         expertSkillMin = 75,
         masterSkillMin = 100,
         armorMinPieces = 7,
+        runningArmorExp = 0.1,
         unarmoredShieldBonusMod = 0.25,
         lightArmorSpeedBonus = 0.15,
+        mediumArmorFatigueReductionMod = 0.5,
+        heavyArmorDeflectChance = 25,
     }
 }
 

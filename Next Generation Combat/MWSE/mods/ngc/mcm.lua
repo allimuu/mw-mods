@@ -184,6 +184,14 @@ local function createMessageSettings(page)
             table = common.config
         }
     }
+    category:createOnOffButton{
+        label = "Show armor perk debug messages",
+        description = "ONLY FOR DEBUGGING. This is a very spammy option that will show all sorts of messages including all trigger messages.",
+        variable = mwse.mcm.createTableVariable{
+            id = "showArmorDebugMessages",
+            table = common.config
+        }
+    }
 
     category:createOnOffButton{
         label = "Show skill gain debug messages",
@@ -443,10 +451,40 @@ local function createBaseArmorPerkSettings(page)
     }
 
     category:createTextField{
+        label = "Full armor running experience (apprentice)",
+        description = "The armor experience amount for all armor types when running in full armor. Default: 0.1",
+        variable = mwse.mcm.createTableVariable{
+            id = "runningArmorExp",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Light armor speed bonus (journeyman)",
+        description = "The speed modifier when in combat or sneaking with light armor. Default: 0.15 or 15%",
+        variable = mwse.mcm.createTableVariable{
+            id = "lightArmorSpeedBonus",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
         label = "Unarmored shield bonus modifier (journeyman)",
         description = "The shield bonus modifier when unarmored (journeyman perk). Default: 0.25 or 25%",
         variable = mwse.mcm.createTableVariable{
             id = "unarmoredShieldBonusMod",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Medium armor reduced damage from fatigue bonus (journeyman)",
+        description = "The modifier for the damage reduced from when low on fatigue. Setting this to 0.5 will half the normal reduction and by default gain 10% bonus damage at low health. (journeyman perk). Default: 0.5",
+        variable = mwse.mcm.createTableVariable{
+            id = "mediumArmorFatigueReductionMod",
             table = common.config.armorPerks,
             numbersOnly = true
         },

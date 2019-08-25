@@ -28,6 +28,7 @@ local knockdownPlayer = false
 local enemyHealthBar
 local fadeTimer
 local playerKnockdownTimer
+local sneakBootMult
 
 -- this function is just here to clean up the old ability from legacy saves
 local function updatePlayer()
@@ -115,6 +116,14 @@ local function onLoaded(e)
     local blockMinGMST = tes3.findGMST("iBlockMinChance")
     block.maxBlockDefault = blockMaxGMST.value
     block.minBlockDefault = blockMinGMST.value
+
+    -- determine player armor class
+    if common.config.toggleArmorPerks then
+        armor.playerArmorClass = armor.getClassOfArmor(tes3.player)
+
+        sneakBootMult = tes3.findGMST("fSneakBootMult")
+        armor.sneakBootMultDefault = sneakBootMult.value
+    end
 end
 
 -- clean up after combat
@@ -217,18 +226,32 @@ local function damageReductionFromSanctuary(defender, damageTaken)
 end
 
 -- Calculate the reduction from attackers fatigue left
-local function damageReductionFromFatigue(attacker, damageTaken)
-    local fatigueMod = ((1 - (attacker.fatigue.current / attacker.fatigue.base)) * common.config.fatigueReductionModifier)
+local function damageReductionFromFatigue(attacker, damageTaken, armorClass, armorSkill)
+    local fatigueReductionMod = common.config.fatigueReductionModifier
+    --[[
+        Armor perks
+    ]]--
+    if common.config.toggleArmorPerks and armorClass and armorSkill then
+        if armorSkill >= common.config.armorPerks.journeymanSkillMin then
+            if armorClass == "medium" then
+                if common.config.showArmorDebugMessages then
+                    tes3.messageBox("Fatigue reduction mod: %f", (fatigueReductionMod * common.config.armorPerks.mediumArmorFatigueReductionMod))
+                end
+                fatigueReductionMod = fatigueReductionMod * common.config.armorPerks.mediumArmorFatigueReductionMod
+            end
+        end
+    end
 
+    local fatigueMod = ((1 - (attacker.fatigue.current / attacker.fatigue.base)) * fatigueReductionMod)
     return damageTaken * fatigueMod
 end
 
-local function getTotalDamageReduced(attacker, defender, damageTaken)
+local function getTotalDamageReduced(attacker, defender, damageTaken, armorClass, armorSkill)
     local newDamageTaken
     local damageReduced = 0
 
     if attacker then
-        local reductionFromFatigue = damageReductionFromFatigue(attacker, damageTaken)
+        local reductionFromFatigue = damageReductionFromFatigue(attacker, damageTaken, armorClass, armorSkill)
         if reductionFromFatigue then
             damageReduced = damageReduced + reductionFromFatigue
         end
@@ -305,8 +328,55 @@ local function onDamage(e)
     local damageTaken = e.damage
     local damageAdded = 0
     local damageReduced = 0
+    local armorClass
+    local armorSkill
+
+    --[[
+        Armor perks
+    ]]--
+    if common.config.toggleArmorPerks and
+        attacker and
+        attacker.actorType ~= 0 then
+        if source == tes3.player then
+            if armor.playerArmorClass then
+                armorClass = armor.playerArmorClass
+            else
+                armor.playerArmorClass = armor.getClassOfArmor(tes3.player)
+                armorClass = armor.playerArmorClass
+            end
+        else
+            if armor.npcArmorClasses[source.id] then
+                armorClass = armor.npcArmorClasses[source.id]
+            else
+                armor.npcArmorClasses[source.id] = armor.getClassOfArmor(source)
+                armorClass = armor.npcArmorClasses[source.id]
+            end
+        end
+
+        if armorClass == "light" then
+            armorSkill = attacker.lightArmor.current
+        elseif armorClass == "medium" then
+            armorSkill = attacker.mediumArmor.current
+        elseif armorClass == "heavy" then
+            armorSkill = attacker.heavyArmor.current
+        elseif armorClass == "unarmored" then
+            armorSkill = attacker.unarmored.current
+        end
+
+        if common.config.showArmorDebugMessages then
+            tes3.messageBox("Attacker armor class: %s", armorClass)
+        end
+    end
 
     if e.source == 'attack' then
+        -- Heavy armor project deflect
+        if armorClass and armorClass == "heavy" and armorSkill then
+            if armorSkill >= common.config.armorPerks.journeymanSkillMin and
+                armor.deflectCheck(source) then
+                return
+            end
+        end
+
         if common.config.toggleAlwaysHit then
             if attacker then
                 -- roll for blind first
@@ -317,7 +387,7 @@ local function onDamage(e)
 
             local newDamageTaken
             local newDamageReduced
-            newDamageTaken, newDamageReduced = getTotalDamageReduced(attacker, defender, damageTaken)
+            newDamageTaken, newDamageReduced = getTotalDamageReduced(attacker, defender, damageTaken, armorClass, armorSkill)
             if newDamageTaken ~= nil then
                 damageTaken = newDamageTaken
             end
@@ -326,6 +396,9 @@ local function onDamage(e)
             end
         end
 
+        --[[
+            Weapon perks
+        ]]--
         if attacker then
             -- core damage values
             local weapon = e.attacker.readiedWeapon
@@ -737,6 +810,7 @@ end
 -- currently only used for hamstring debuff
 local function onCalcMoveSpeed(e)
     local source = e.reference
+    local mobileActor = e.mobile
 
     --[[
         Armor perks
@@ -745,16 +819,28 @@ local function onCalcMoveSpeed(e)
         if source == tes3.player then
             if armor.playerArmorClass == "light" and
             tes3.mobilePlayer.lightArmor.current >= common.config.armorPerks.journeymanSkillMin then
-                if e.mobile.isSneaking or e.mobile.inCombat then
+                -- no boot weight while sneaking
+                if mobileActor.isSneaking then
+                    if armor.sneakBootMultDefault ~= 0 then
+                        sneakBootMult.value = 0
+                    end
+                else
+                    if sneakBootMult.value ~= armor.sneakBootMultDefault then
+                        sneakBootMult.value = armor.sneakBootMultDefault
+                    end
+                end
+                -- bonus movement speed
+                if mobileActor.isSneaking or mobileActor.inCombat then
                     e.speed = e.speed * (1 + common.config.armorPerks.lightArmorSpeedBonus)
                 end
             end
         else
             if armor.npcArmorClasses[source.id] then
                 if armor.npcArmorClasses[source.id] == "light" then
-                    local armorSkill = e.mobile.lightArmor.current
+                    local armorSkill = mobileActor.lightArmor.current
                     if armorSkill and armorSkill >= common.config.armorPerks.journeymanSkillMin then
-                        if e.mobile.isSneaking or e.mobile.inCombat then
+                        -- bonus movement speed
+                        if mobileActor.isSneaking or mobileActor.inCombat then
                             e.speed = e.speed * (1 + common.config.armorPerks.lightArmorSpeedBonus)
                         end
                     end
