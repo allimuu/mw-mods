@@ -462,7 +462,7 @@ local function createBaseArmorPerkSettings(page)
 
     category:createTextField{
         label = "Light armor speed bonus (journeyman)",
-        description = "The speed modifier when in combat or sneaking with light armor. Default: 0.15 or 15%",
+        description = "The speed modifier when sneaking with light armor. Default: 0.15 or 15%",
         variable = mwse.mcm.createTableVariable{
             id = "lightArmorSpeedBonus",
             table = common.config.armorPerks,
@@ -485,6 +485,26 @@ local function createBaseArmorPerkSettings(page)
         description = "The modifier for the damage reduced from when low on fatigue. Setting this to 0.5 will half the normal reduction and by default gain 10% bonus damage at low health. (journeyman perk). Default: 0.5",
         variable = mwse.mcm.createTableVariable{
             id = "mediumArmorFatigueReductionMod",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Heavy armor deflect chance (journeyman)",
+        description = "The modifier for the damage reduced from when low on fatigue. Setting this to 0.5 will half the normal reduction and by default gain 10% bonus damage at low health. (journeyman perk). Default: 0.5",
+        variable = mwse.mcm.createTableVariable{
+            id = "heavyArmorDeflectChance",
+            table = common.config.armorPerks,
+            numbersOnly = true
+        },
+    }
+
+    category:createTextField{
+        label = "Light armor bonus Sanctuary bonus (expert)",
+        description = "Bonus damage reduction fomr your Sanctuary effect, so if you have 15% damage reduction you will have 25% more so 18.75%. (expert perk). Default: 0.25 or 25%",
+        variable = mwse.mcm.createTableVariable{
+            id = "lightArmorBonusReductionFromSanctuary",
             table = common.config.armorPerks,
             numbersOnly = true
         },

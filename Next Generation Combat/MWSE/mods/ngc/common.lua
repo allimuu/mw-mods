@@ -194,6 +194,7 @@ local defaultConfig = {
         lightArmorSpeedBonus = 0.15,
         mediumArmorFatigueReductionMod = 0.5,
         heavyArmorDeflectChance = 25,
+        lightArmorBonusReductionFromSanctuary = 0.25,
     }
 }
 

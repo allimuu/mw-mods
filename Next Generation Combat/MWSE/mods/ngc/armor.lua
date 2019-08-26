@@ -153,10 +153,10 @@ function this.unarmoredShieldBonusCalc(e)
 end
 
 -- Journeyman heavy armor perk
-function this.deflectCheck(source)
+function this.deflectCheck(target)
     local deflectChanceRoll = math.random(100)
     if common.config.armorPerks.heavyArmorDeflectChance >= deflectChanceRoll then
-        if (common.config.showMessages and source == tes3.player) then
+        if (common.config.showMessages and target == tes3.player) then
             tes3.messageBox({ message = "Deflected!" })
         end
         -- no damage
