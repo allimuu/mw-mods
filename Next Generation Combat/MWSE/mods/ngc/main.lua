@@ -344,10 +344,17 @@ local function onDamage(e)
     local damageTaken = e.damage
     local damageAdded = 0
     local damageReduced = 0
+
+    -- armor perk related variables
     local attackerArmorClass
     local attackerArmorSkill
     local defenderArmorClass
     local defenderArmorSkill
+
+    -- global damage modifier is added to all sources of damage (mostly from armor perks)
+    local globalDamageMult
+    -- NPC damage multiplier is an extra damage multiplier for NPCs
+    local npcDamageMult
 
     --[[
         Armor perks
@@ -374,10 +381,18 @@ local function onDamage(e)
                 attackerArmorSkill = attacker.lightArmor.current
             elseif attackerArmorClass == "medium" then
                 attackerArmorSkill = attacker.mediumArmor.current
+                -- Medium armor damage perk
+                if attackerArmorSkill >= common.config.armorPerks.expertSkillMin then
+                    globalDamageMult = armor.mediumArmorDamageBonus(attacker)
+                end
             elseif attackerArmorClass == "heavy" then
                 attackerArmorSkill = attacker.heavyArmor.current
             elseif attackerArmorClass == "unarmored" then
                 attackerArmorSkill = attacker.unarmored.current
+                -- Unarmored damage perk
+                if attackerArmorSkill >= common.config.armorPerks.expertSkillMin then
+                    globalDamageMult = armor.unarmoredDamageBonus(attacker)
+                end
             end
 
             if common.config.showArmorDebugMessages then
@@ -664,22 +679,13 @@ local function onDamage(e)
     --[[
         Deal with any damage added or reduced by modifying e.damage
     ]]--
-    if damageAdded then
-        -- we already have damageReduced taken into account with damageTaken
-        e.damage = damageTaken + damageAdded
-        if common.config.showDebugMessages then
-            local showReducedDamage = 0
-            if damageReduced then
-                showReducedDamage = damageReduced
-            end
-            tes3.messageBox({ message = "Final damage: " .. math.round(e.damage, 2) .. ". Reduced: " .. math.round(showReducedDamage, 2) .. ". Added: " .. math.round(damageAdded, 2)  })
-        end
-    elseif damageReduced then
-        -- we don't have any damage added but we still have damage reduced
-        e.damage = e.damage - damageReduced
-        if common.config.showDebugMessages then
-            tes3.messageBox({ message = "Reduced: " .. math.round(damageReduced, 2) })
-        end
+
+    -- we already have damageReduced taken into account with damageTaken
+    local finalDamage = damageTaken + damageAdded
+    e.damage = finalDamage
+    if common.config.showDebugMessages then
+        local showReducedDamage = damageReduced or 0
+        tes3.messageBox({ message = "Final damage: " .. math.round(e.damage, 2) .. ". Reduced: " .. math.round(showReducedDamage, 2) .. ". Added: " .. math.round(damageAdded, 2)  })
     end
 end
 

@@ -166,4 +166,14 @@ function this.deflectCheck(target)
     return false
 end
 
+-- Expert medium armor perk
+function this.mediumArmorDamageBonus(attacker)
+
+end
+
+-- Expert unarmroed armor perk
+function this.unarmoredDamageBonus(attacker)
+
+end
+
 return this
