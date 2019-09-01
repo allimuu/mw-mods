@@ -1,0 +1,63 @@
+Black Hands Dagger
+
+Cast When Strikes
+Absorb Health 10-25 pts for 30 secs on Touch  -> Absorb Health 5-10 pts for 15 secs on Touch
+Blind 10-50% for 30 secs on Touch             -> Blind 30-40% for 15 secs on Touch
+
+Reasoning:
+Black Hands Dagger is one of the most powerful DPS weapons in the game and with such a powerful Absorb Health also one of the easiest for defense. So the Absorb Health was reduced by half in magnitude and duration (and it's still one of the highest DPS weapons) and the Blind effect range was brought in to make it more reliable. It's still very strong even with the nerfs.
+
+Soul Drinker
+
+Cast When Strikes
+Soultrap for 30 secs on Touch
+NEW: Absorb Health 1-5 pts on Touch
+
+Reasoning:
+Generaly a good dagger but not much use for any pure mage. Adding Absorb Health increases it's damage and defensive capability.
+
+Shimsil
+
+Cast When Used				 ->  Constant Effect
+Fortify Sneak 5 pts for 30 secs on Self  ->  Fortify Sneak 5pts
+Chameleon 10-30 pts for 30 secs on Self  ->  Chameleon 10pts
+
+Fury
+
+Constant Effect
+REMOVED: Blind Blind 20% on Self
+NEW: Drain Endurance 10 pts on Self
+Drain Heavy Armor 20 pts on Self  -> 10pts on Self
+Drain Medium Armor 20 pts on Self -> 10pts on Self
+Drain Light Armor 20 pts on Self  -> 10pts on Self
+Drain Unarmored 20 pts on Self    -> 10pts on Self
+Fortify Attack 20 pts on Self
+
+Reasoning:
+This was always a weird one. Removed the Blind and reduced the drain on skills, but also added drain endurance (which will hurt a bit if you use state-based HP) but now it's a good source of Fortify Attack.
+
+Magebane
+
+Cast When Used				    ->  Constant Effect
+Resist Magicka 20-40% for 10 secs on Self   ->  Resist Magicka 15%
+
+Stormkiss
+
+Cast When Used                   -> Cast When Strikes
+Shock Damage 1-25 pts on Target  -> Shock Damage 5-15 pts on Target
+
+Reasoning:
+Cast when used on a melee weapon? Seriously? Not as strong as the Cloudcleaver and overall less DPS but much better now.
+
+Bonebiter Bow of Sul-Senipul
+
+Cast When Used                   -> Constant Effect
+Damage Agility 20 pts on Target  -> Fortify Attack 7pts on Self
+
+Reasoning:
+Using Damage Agility before shooting out of sneak doesn't make any sense, also in the general spirit of removing cast when used, now it has Fortify Attack which will be very strong early game.
+
+Shortbow of Sanguine Sureflight
+
+Cast When Used                             -> Constant Effect
+Fortify Marksman 7 pts for 30 secs on Self -> Fortify Marksman 5pts
